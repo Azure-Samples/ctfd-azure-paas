@@ -1,3 +1,5 @@
+name: Build ARM from Bicep
+
 on:
   push:
     branches:
