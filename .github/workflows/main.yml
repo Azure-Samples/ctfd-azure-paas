@@ -2,11 +2,9 @@ name: Build ARM from Bicep
 
 
 on: 
-  workflow_dispatch:
-#  workflow_dispatch:
-#  push:
-#    branches:
-#      - master
+  push:
+    branches:
+      - main
     
 jobs:
   build-bicep:
