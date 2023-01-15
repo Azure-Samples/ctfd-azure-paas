@@ -1,57 +1,58 @@
-# Project Name
+# CTFd on Azure PaaS
 
-(short, 1-3 sentenced, description of the project)
+This project sets up a self-hosted, scalable, secured, and easy to maintain [CTFd][ctfd] environment using Azure PaaS.
 
 ## Features
 
-This project framework provides the following features:
+![CTFd architecture](/assets/ctfd.svg)
 
-* Feature 1
-* Feature 2
-* ...
+This project provides the following features:
+
+* Infrastructure as Code with [Azure Bicep][bicep].
+* High scale that meets different team sizes with [Azure App Service Web App for Containers][app-service].
+* Backend database and cache provided with Azure PaaS [Database for MariaDB][mariadb] and [Cache for Redis][redis].
+* Secrets management using [Azure Key Vault][keyvault].
+* Log Management with [Azure Log Analytics][log-analytics].
+* Private networking with [Private Endpoints][private-endpoint] and [App Service VNet Integration][vnet-integration].
 
 ## Getting Started
 
 ### Prerequisites
 
-(ideally very short, if any)
-
-- OS
-- Library version
-- ...
-
-### Installation
-
-(ideally very short)
-
-- npm install [package name]
-- mvn install
-- ...
+* [Azure CLI][az-cli-installation]
+* Azure Subscription with Contributor access
+* Azure Active Directory access
 
 ### Quickstart
-(Add steps to get up and running quickly)
 
-1. git clone [repository clone url]
-2. cd [repository name]
-3. ...
+```bash
+git clone https://github.com/Azure-Samples/ctfd-azure-paas.git
+cd ctfd-azure-paas
 
+export DB_PASSWORD='YOUR PASSWORD'
+export RESOURCE_GROUP_NAME='RESOURCE GROUP NAME'
 
-## Demo
-
-A demo app is included to show how to use the project.
-
-To run the demo, follow these steps:
-
-(Add steps to start up the demo)
-
-1.
-2.
-3.
+az deployment group create --resource-group $RESOURCE_GROUP_NAME --template-file ctfd.bicep --parameters administratorLoginPassword=$DB_PASSWORD 
+```
 
 ## Resources
 
-(Any additional resources or related projects)
+* [App Services - Web App for container][app-service]
+* [Azure Database for MariaDB][mariadb]
+* [Azure Cache for Redis][redis]
+* [Azure Key Vault][keyvault]
+* [Azure Log Analytics][log-analytics]
+* [Azure Networking][azure-networking]
 
-- Link to supporting information
-- Link to similar sample
-- ...
+<!-- Links -->
+[ctfd]: https://github.com/CTFd/CTFd
+[bicep]: https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview?tabs=bicep
+[app-service]: https://azure.microsoft.com/en-us/products/app-service/containers/
+[mariadb]: https://azure.microsoft.com/services/mariadb/
+[redis]: https://www.microsoft.com/azure/redis-cache/cache-overview
+[keyvault]: https://azure.microsoft.com/services/key-vault
+[log-analytics]: /azure/azure-monitor/log-query/log-analytics-overview
+[private-endpoint]: https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview
+[vnet-integration]: https://learn.microsoft.com/en-us/azure/app-service/overview-vnet-integration
+[az-cli-installation]: https://learn.microsoft.com/en-us/cli/azure/install-azure-cli
+[azure-networking]: /azure/virtual-network/virtual-networks-overview
