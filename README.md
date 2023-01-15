@@ -25,6 +25,9 @@ This project provides the following features:
 
 ### Quickstart
 
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fctfd-azure-paas%2Fmaster%2Fazuredeploy.json)
+
+
 ```bash
 git clone https://github.com/Azure-Samples/ctfd-azure-paas.git
 cd ctfd-azure-paas
