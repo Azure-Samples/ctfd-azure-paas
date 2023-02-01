@@ -1,10 +1,8 @@
-param nameUniquenss string = uniqueString(resourceGroup().id)
+@description('Location for all resources.')
+param resourcesLocation string = resourceGroup().location
 
 @description('Deploy with VNet')
 param vnet bool = true
-
-@description('Server Name for Azure cache for Redis')
-param redisServerName string = 'ctfd-redis-${nameUniquenss}'
 
 @description('SKU Name for Azure cache for Redis')
 @allowed([
@@ -26,14 +24,11 @@ param redisSkuName string = 'Standard'
 @description('The size of the Redis cache')
 param redisSkuSize int = 0
 
-@description('Server Name for Azure database for MariaDB')
-param mariaServerName string = 'ctfd-mariadb-${nameUniquenss}'
-
 @description('Database administrator login name')
 @minLength(1)
 param administratorLogin string = 'ctfd'
 
-@description('Database administrator password')
+@description('Database administrator password. Minimum 8 characters and maximum 128 characters. Password must contain characters from three of the following categories: English uppercase letters, English lowercase letters, numbers, and non-alphanumeric characters.')
 @minLength(8)
 @secure()
 param administratorLoginPassword string
@@ -47,12 +42,6 @@ param administratorLoginPassword string
   32
 ])
 param databaseVCores int = 2
-
-@description('Name of Azure Key Vault')
-param keyVaultName string = 'ctfd-kv-${nameUniquenss}'
-
-@description('Server Name for Azure app service')
-param appServicePlanName string = 'ctfd-server-${nameUniquenss}'
 
 @description('App Service Plan SKU name')
 @allowed([
@@ -69,111 +58,123 @@ param appServicePlanName string = 'ctfd-server-${nameUniquenss}'
 ])
 param appServicePlanSkuName string = 'B1'
 
-@description('Name for Azure Web app')
-param webAppName string = 'ctfd-app-${nameUniquenss}'
+@description('Name for Azure Web app. Controls the DNS name of the CTF website')
+param webAppName string = 'ctfd-app-${uniqueString(resourceGroup().id)}'
 
-@description('Name for Log Analytics Workspace')
-param logAnalyticsName string = 'ctfd-log-analytics-${nameUniquenss}'
+@description('SKU for Azure Container Registry')
+var containerRegistrySku = 'Basic'
 
-@description('Name of the VNet')
-param virtualNetworkName string = 'ctf-vnet'
 
-@description('Location for all resources.')
-param resourcesLocation string = resourceGroup().location
+@description('Name of Azure Key Vault')
+var keyVaultName = 'ctfd-kv-${uniqueString(resourceGroup().id)}'
 
-var resourcesSubnetName = 'resources_subnet'
-var integrationSubnetName = 'integration_subnet'
+@description('Name of the key vault secret holding the cache connection string')
 var ctfCacheSecretName = 'ctfd-cache-url'
+
+@description('Name of the key vault secret holding the database connection string')
 var ctfDatabaseSecretName = 'ctfd-db-url'
 
 // Scope
 targetScope = 'resourceGroup'
 
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: 'ctf-managed-identity'
+  location: resourcesLocation
+}
+
+@description('Deploys Azure Log Analytics workspace')
+module logAnalyticsModule 'modules/loganalytics.bicep' = {
+  name: 'logAnalyticsDeploy'
+  params: {
+    location: resourcesLocation
+  }
+}
+
+@description('Deploys Azure Container Registry and build a custom CTFd docker image')
+module acrModule 'modules/acr.bicep' = {
+  name: 'acrDeploy'
+  params: {
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    location: resourcesLocation
+    containerRegistrySku: containerRegistrySku
+    managedIdentityId: managedIdentity.id
+    managedIdentityPrincipalId: managedIdentity.properties.principalId
+  }
+}
+
+@description('Deploys Virtual Network with two subnets')
 module vnetModule 'modules/vnet.bicep' = if (vnet) {
   name: 'vnetDeploy'
   params: {
     location: resourcesLocation
-    integrationSubnetName: integrationSubnetName
-    resouorcesSubnetName: resourcesSubnetName
-    virtualNetworkName: virtualNetworkName
   }
 }
 
-module logAnalyticsModule 'modules/loganalytics.bicep' = {
-  name: 'logAnalyticsDeploy'
-  params: {
-    appName: webAppName
-    logAnalyticsName: logAnalyticsName
-    location: resourcesLocation
-  }
-}
-
+@description('Deploys Azure App Service for containers')
 module ctfWebAppModule 'modules/webapp.bicep' = {
   name: 'ctfDeploy'
-  dependsOn: [ vnetModule ]
   params: {
-    virtualNetworkName: virtualNetworkName
+    virtualNetworkName: vnetModule.outputs.virtualNetworkName
     location: resourcesLocation
-    appServicePlanName: appServicePlanName
     appServicePlanSkuName: appServicePlanSkuName
     keyVaultName: keyVaultName
-    ctfCacheUrlSecretName: ctfCacheSecretName
-    ctfDatabaseUrlSecretName: ctfDatabaseSecretName
-    integrationSubnetName: integrationSubnetName
+    ctfCacheSecretName: ctfCacheSecretName
+    ctfDatabaseSecretName: ctfDatabaseSecretName
+    publicResourcesSubnetName: vnetModule.outputs.publicResourcesSubnetName
     webAppName: webAppName
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    acrImageName: acrModule.outputs.acrImage
+    registryName: acrModule.outputs.registryName
+    managedIdentityClientId: managedIdentity.properties.clientId
+    managedIdentityId: managedIdentity.id
     vnet: vnet
   }
 }
 
+@description('Deploys Azure Key Vault')
 module akvModule 'modules/keyvault.bicep' = {
   name: 'keyVaultDeploy'
   dependsOn: [ ctfWebAppModule ]
   params: {
-    keyVaultName: keyVaultName
     location: resourcesLocation
-    readerPrincipalId: ctfWebAppModule.outputs.servicePrincipalId
-    resourcesSubnetName: resourcesSubnetName
-    virtualNetworkName: virtualNetworkName
+    readerPrincipalId: managedIdentity.properties.principalId
+    internalResourcesSubnetName: vnetModule.outputs.internalResourcesSubnetName
+    virtualNetworkName: vnetModule.outputs.virtualNetworkName
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
     vnet: vnet
+    keyVaultName: keyVaultName
   }
 }
 
+@description('Deploys Azure Cache for Redis and a Key Vault secret with its connection string')
 module redisModule 'modules/redis.bicep' = {
   name: 'redisDeploy'
-  dependsOn: [ 
-    vnetModule
-    akvModule
-  ]
   params: {
-    redisServerName: redisServerName
-    virtualNetworkName: virtualNetworkName
-    resourcesSubnetName: resourcesSubnetName
+    internalResourcesSubnetName: vnetModule.outputs.internalResourcesSubnetName
+    virtualNetworkName: vnetModule.outputs.virtualNetworkName
     location: resourcesLocation
     vnet: vnet
     ctfCacheSecretName: ctfCacheSecretName
-    keyVaultName: keyVaultName
+    keyVaultName: akvModule.outputs.keyVaultName
     redisSkuName: redisSkuName
     redisSkuSize: redisSkuSize
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
   }
 }
 
+@description('Deploys Azure Database for MariaDB and a Key Vault secret with its connection string')
 module mariaDbModule 'modules/mariadb.bicep' = {
   name: 'mariaDbDeploy'
-  dependsOn: [ 
-    vnetModule
-    akvModule
-  ]
   params: {
-    mariaServerName: mariaServerName
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
-    virtualNetworkName: virtualNetworkName
-    resourcesSubnetName: resourcesSubnetName
+    internalResourcesSubnetName: vnetModule.outputs.internalResourcesSubnetName
+    virtualNetworkName: vnetModule.outputs.virtualNetworkName
     location: resourcesLocation
     vnet: vnet
     ctfDbSecretName: ctfDatabaseSecretName
-    keyVaultName: keyVaultName
+    keyVaultName: akvModule.outputs.keyVaultName
     databaseVCores: databaseVCores
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
   }
 }

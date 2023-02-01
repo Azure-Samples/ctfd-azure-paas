@@ -1,4 +1,4 @@
-name: Build ARM from Bicep
+name: Build ARM JSON from Bicep
 
 
 on: 
@@ -12,9 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          # Full git history is needed to get a proper list of changed files within `super-linter`
-          fetch-depth: 0
       - name: Bicep Build
         uses: Azure/bicep-build-action@v1.0.0
         with:
