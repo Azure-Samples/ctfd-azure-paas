@@ -41,7 +41,7 @@ az deployment group create --resource-group $RESOURCE_GROUP_NAME --template-file
 
 ### Access and Configure CTFd
 
-* Navigate your browser to the App Service URL, in the form of '*https://[YOUR APP SERVICE NAME].azurewebsites.net*'
+* Navigate your browser to the App Service URL, in the form of `*https://[YOUR APP SERVICE NAME].azurewebsites.net*`
 * Configure your Capture the Flag event using the administrator dashboard. more info [here](https://docs.ctfd.io/tutorials/getting-started)
 
 ### Troubleshooting and debugging
@@ -82,7 +82,7 @@ The template deployment can be further configured using the following parameters
 * **administratorLoginPassword** - Admin Password of Azure Database for MariaDB
 * **databaseVCores** -Azure Database for MariaDB VCores. More info at [Azure Database for MariaDB Pricing][mariadb-pricing]
 * **appServicePlanSkuName** - Azure App Service Plan SKU Name. More info at [Azure App Service Pricing][app-service-pricing]
-* **webAppName** - Azure App Service Name. Controls the DNS name of the CTF web site.
+* **webAppName** - Azure App Service Name. Controls the DNS name of the CTF site.
 
 ## Resources
 
