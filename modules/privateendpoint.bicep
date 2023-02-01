@@ -1,4 +1,3 @@
-
 @description('Name of the VNet')
 param virtualNetworkName string
 

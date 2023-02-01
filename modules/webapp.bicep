@@ -1,9 +1,6 @@
 @description('Deploy in VNet')
 param vnet bool
 
-@description('Server Name for Azure app service')
-param appServicePlanName string
-
 @description('Name for Azure Web app')
 param webAppName string
 
@@ -13,17 +10,11 @@ param location string
 @description('Name of the VNet')
 param virtualNetworkName string
 
-@description('Name of the integration subnet')
-param integrationSubnetName string
+@description('Name of the public subnet')
+param publicResourcesSubnetName string
 
 @description('Name of azure key vault')
 param keyVaultName string
-
-@description('Secret Name of the ctf database url in key vault')
-param ctfDatabaseUrlSecretName string
-
-@description('Secret Name of the ctf cache url in key vault')
-param ctfCacheUrlSecretName string
 
 @description('Log Anaytics Workspace Id')
 param logAnalyticsWorkspaceId string
@@ -31,15 +22,36 @@ param logAnalyticsWorkspaceId string
 @description('App Service Plan SKU name')
 param appServicePlanSkuName string
 
+@description('Azure Container Registry Image name')
+param acrImageName string
+
+@description('Azure Container Registry name')
+param registryName string
+
+@description('Name of the key vault secret holding the cache connection string')
+param ctfCacheSecretName string
+
+@description('Name of the key vault secret holding the database connection string')
+param ctfDatabaseSecretName string
+
+@description('CTF managed identity client ID')
+param managedIdentityClientId string
+
+@description('CTF managed identity ID')
+param managedIdentityId string
+
+@description('Server Name for Azure app service')
+var appServicePlanName = 'ctfd-server-${uniqueString(resourceGroup().id)}'
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2020-12-01' = {
   name: appServicePlanName
   location: location
   kind: 'linux'
   properties: {
     reserved: true
-  }	
-  sku:  {
-  	name: appServicePlanSkuName
+  }
+  sku: {
+    name: appServicePlanSkuName
   }
 }
 
@@ -48,20 +60,26 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   location: location
   tags: {}
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${managedIdentityId}': { }
+    }
   }
   properties: {
-    virtualNetworkSubnetId: (vnet ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, integrationSubnetName) : null)
+    virtualNetworkSubnetId: (vnet ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, publicResourcesSubnetName) : null)
+    keyVaultReferenceIdentity: managedIdentityId
     vnetRouteAllEnabled: (vnet ? true : false)
     siteConfig: {
+      acrUseManagedIdentityCreds: true
+      acrUserManagedIdentityID: managedIdentityClientId
       appSettings: [
         {
           name: 'DATABASE_URL'
-          value: '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/${ctfDatabaseUrlSecretName}/)'
+          value: '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/${ctfDatabaseSecretName}/)'
         }
         {
           name: 'REDIS_URL'
-          value: '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/${ctfCacheUrlSecretName}/)'
+          value: '@Microsoft.KeyVault(SecretUri=https://${keyVaultName}.vault.azure.net/secrets/${ctfCacheSecretName}/)'
         }
         {
           name: 'REVERSE_PROXY'
@@ -73,10 +91,10 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: 'https://index.docker.io'
+          value: '${registryName}.azurecr.io'
         }
       ]
-      linuxFxVersion: 'DOCKER|ctfd/ctfd:latest'    
+      linuxFxVersion: 'DOCKER|${acrImageName}'
     }
     serverFarmId: appServicePlan.id
   }
@@ -113,62 +131,51 @@ resource diagnosticsSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-p
   properties: {
     logs: [
       {
-          category: 'AppServiceHTTPLogs'
-          categoryGroup: null
-          enabled: true
-          retentionPolicy: {
-              days: 0
-              enabled: false
-          }
-      }
-      {
-          category: 'AppServiceConsoleLogs'
-          categoryGroup: null
-          enabled: true
-          retentionPolicy: {
-              days: 0
-              enabled: false
-          }
-      }
-      {
-          category: 'AppServiceAppLogs'
-          categoryGroup: null
-          enabled: true
-          retentionPolicy: {
-              days: 0
-              enabled: false
-          }
-      }
-      {
-          category: 'AppServiceAuditLogs'
-          categoryGroup: null
+        category: 'AppServiceHTTPLogs'
+        categoryGroup: null
+        enabled: true
+        retentionPolicy: {
+          days: 5
           enabled: false
-          retentionPolicy: {
-              days: 0
-              enabled: false
-          }
+        }
       }
       {
-          category: 'AppServiceIPSecAuditLogs'
-          categoryGroup: null
+        category: 'AppServiceConsoleLogs'
+        categoryGroup: null
+        enabled: true
+        retentionPolicy: {
+          days:5
           enabled: false
-          retentionPolicy: {
-              days: 0
-              enabled: false
-          }
+        }
       }
       {
-          category: 'AppServicePlatformLogs'
-          categoryGroup: null
-          enabled: true
-          retentionPolicy: {
-              days: 0
-              enabled: false
-          }
+        category: 'AppServiceAppLogs'
+        categoryGroup: null
+        enabled: true
+        retentionPolicy: {
+          days: 5
+          enabled: false
+        }
       }
-  ]
-  workspaceId: logAnalyticsWorkspaceId
+      {
+        category: 'AppServiceAuditLogs'
+        categoryGroup: null
+        enabled: true
+        retentionPolicy: {
+          days: 5
+          enabled: false
+        }
+      }
+      {
+        category: 'AppServicePlatformLogs'
+        categoryGroup: null
+        enabled: true
+        retentionPolicy: {
+          days: 5
+          enabled: false
+        }
+      }
+    ]
+    workspaceId: logAnalyticsWorkspaceId
   }
 }
-
-output servicePrincipalId string = webApp.identity.principalId

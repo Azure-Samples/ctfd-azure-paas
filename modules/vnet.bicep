@@ -1,18 +1,23 @@
-@description('Name of the VNet')
-param virtualNetworkName string
-
-@description('Name of the VNet')
-param resouorcesSubnetName string
-
-@description('Name of the VNet')
-param integrationSubnetName string
-
 @description('Location for all resources.')
 param location string
 
+@description('Name of the VNet')
+var virtualNetworkName = 'ctf-vnet'
+
+@description('Name of the internal resources subnet')
+var internalResourcesSubnetName = 'internal_resources_subnet'
+
+@description('Name of the public resources subnet')
+var publicResourcesSubnetName = 'public_resources_subnet'
+
+@description('CIDR of the virtual network')
 var virtualNetworkCIDR = '10.200.0.0/16'
-var integrationSubnetCIDR = '10.200.1.0/24'
-var resourcesSubnetCIDR = '10.200.2.0/24'
+
+@description('CIDR of the public resources subnet')
+var publicResourcesSubnetCIDR = '10.200.1.0/26'
+
+@description('CIDR of the internal resources subnet')
+var internalResourcesSubnetCIDR = '10.200.2.0/28'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   name: virtualNetworkName
@@ -25,16 +30,16 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
     }
     subnets: [
       {
-        name: resouorcesSubnetName
+        name: internalResourcesSubnetName
         properties: {
-          addressPrefix: resourcesSubnetCIDR
+          addressPrefix: internalResourcesSubnetCIDR
           privateEndpointNetworkPolicies: 'Disabled'
         }
       }
       {
-        name: integrationSubnetName
+        name: publicResourcesSubnetName
         properties: {
-          addressPrefix: integrationSubnetCIDR
+          addressPrefix: publicResourcesSubnetCIDR
           delegations: [
             {
               name: 'delegation'
@@ -49,3 +54,9 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
     ]
   }
 }
+
+output virtualNetworkName string = virtualNetworkName
+
+output internalResourcesSubnetName string = internalResourcesSubnetName
+
+output publicResourcesSubnetName string = publicResourcesSubnetName

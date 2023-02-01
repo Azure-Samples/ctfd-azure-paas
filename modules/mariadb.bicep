@@ -1,9 +1,6 @@
 @description('Deploy in VNet')
 param vnet bool
 
-@description('Server Name for Azure database for MariaDB')
-param mariaServerName string
-
 @description('Database administrator login name')
 @minLength(1)
 param administratorLogin string
@@ -19,8 +16,8 @@ param databaseVCores int
 @description('Name of the VNet')
 param virtualNetworkName string
 
-@description('Name of the resources subnet')
-param resourcesSubnetName string
+@description('Name of the internal resources subnet')
+param internalResourcesSubnetName string
 
 @description('Name of the key vault')
 param keyVaultName string
@@ -31,6 +28,11 @@ param ctfDbSecretName string
 @description('Location for all resources.')
 param location string
 
+@description('Log Anaytics Workspace Id')
+param logAnalyticsWorkspaceId string
+
+@description('Server Name for Azure database for MariaDB')
+var mariaServerName = 'ctfd-mariadb-${uniqueString(resourceGroup().id)}'
 
 resource mariaDbServer 'Microsoft.DBforMariaDB/servers@2018-06-01' = {
   name: mariaServerName
@@ -41,16 +43,10 @@ resource mariaDbServer 'Microsoft.DBforMariaDB/servers@2018-06-01' = {
   }
   properties: {
     createMode: 'Default'
-    version:  '10.3'
+    version: '10.3'
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
-    sslEnforcement: 'Disabled'
-    publicNetworkAccess: (vnet ? 'Disabled' : 'Enabled') 
-    storageProfile: {
-      storageMB: 5120
-      backupRetentionDays: 7
-      geoRedundantBackup: 'Disabled'
-    }
+    publicNetworkAccess: (vnet ? 'Disabled' : 'Enabled')
   }
 
   resource mariadbconfig_char_set 'configurations@2018-06-01' = {
@@ -78,7 +74,7 @@ resource mariaDbServer 'Microsoft.DBforMariaDB/servers@2018-06-01' = {
   }
 
   resource allowAllWindowsAzureIps 'firewallRules@2018-06-01' = if (!vnet) {
-    name: 'AllowAllWindowsAzureIps' 
+    name: 'AllowAllWindowsAzureIps'
     properties: {
       startIpAddress: '0.0.0.0'
       endIpAddress: '0.0.0.0'
@@ -90,7 +86,7 @@ module privateEndpointModule 'privateendpoint.bicep' = if (vnet) {
   name: 'mariaDbPrivateEndpointDeploy'
   params: {
     virtualNetworkName: virtualNetworkName
-    subnetName: resourcesSubnetName
+    subnetName: internalResourcesSubnetName
     resuorceId: mariaDbServer.id
     resuorceGroupId: 'mariadbServer'
     privateDnsZoneName: 'privatelink.mariadb.database.azure.com'
@@ -104,8 +100,25 @@ module cacheSecret 'keyvaultsecret.bicep' = {
   params: {
     keyVaultName: keyVaultName
     secretName: ctfDbSecretName
-    secretValue: 'mysql+pymysql://${administratorLogin}%40${mariaServerName}.mariadb.database.azure.com:${administratorLoginPassword}@${mariaServerName}.mariadb.database.azure.com/ctfd'
+    secretValue: 'mysql+pymysql://${administratorLogin}%40${mariaServerName}.mariadb.database.azure.com:${administratorLoginPassword}@${mariaServerName}.mariadb.database.azure.com/ctfd?ssl_ca=/opt/certificates/BaltimoreCyberTrustRoot.crt.pem'
   }
 }
 
-
+resource diagnosticsSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: '${mariaServerName}-diagnostics'
+  scope: mariaDbServer
+  properties: {
+    logs: [
+      {
+        category: null
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          days: 5
+          enabled: false
+        }
+      }
+    ]
+    workspaceId: logAnalyticsWorkspaceId
+  }
+}

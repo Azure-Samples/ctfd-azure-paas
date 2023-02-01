@@ -1,9 +1,6 @@
 @description('Deploy in VNet')
 param vnet bool
 
-@description('Server Name for Azure cache for Redis')
-param redisServerName string
-
 @description('SKU Name for Azure cache for Redis')
 param redisSkuName string
 
@@ -13,8 +10,8 @@ param redisSkuSize int
 @description('Name of the VNet')
 param virtualNetworkName string
 
-@description('Name of the resources subnet')
-param resourcesSubnetName string
+@description('Name of the internal resources subnet')
+param internalResourcesSubnetName string
 
 @description('Name of the key vault')
 param keyVaultName string
@@ -25,14 +22,19 @@ param ctfCacheSecretName string
 @description('Location for all resources.')
 param location string
 
-var family = redisSkuName ==  'Basic' || redisSkuName ==  'Standard' ? 'C' : 'P'
+@description('Log Anaytics Workspace Id')
+param logAnalyticsWorkspaceId string
 
-resource redis_cache 'Microsoft.Cache/redis@2022-06-01' = {
+@description('Server Name for Azure cache for Redis')
+var redisServerName = 'ctfd-redis-${uniqueString(resourceGroup().id)}'
+
+var family = redisSkuName == 'Basic' || redisSkuName == 'Standard' ? 'C' : 'P'
+
+resource redisCache 'Microsoft.Cache/redis@2022-06-01' = {
   name: redisServerName
   location: location
   properties: {
-    enableNonSslPort: true
-    publicNetworkAccess: (vnet ? 'Disabled' : 'Enabled') 
+    publicNetworkAccess: (vnet ? 'Disabled' : 'Enabled')
     sku: {
       capacity: redisSkuSize
       family: family
@@ -45,8 +47,8 @@ module privateEndpointModule 'privateendpoint.bicep' = if (vnet) {
   name: 'redisPrivateEndpointDeploy'
   params: {
     virtualNetworkName: virtualNetworkName
-    subnetName: resourcesSubnetName
-    resuorceId: redis_cache.id
+    subnetName: internalResourcesSubnetName
+    resuorceId: redisCache.id
     resuorceGroupId: 'redisCache'
     privateDnsZoneName: 'privatelink.redis.cache.windows.net'
     privateEndpointName: 'redis_private_endpoint'
@@ -59,6 +61,34 @@ module cacheSecret 'keyvaultsecret.bicep' = {
   params: {
     keyVaultName: keyVaultName
     secretName: ctfCacheSecretName
-    secretValue: 'redis://:${redis_cache.listKeys().primaryKey}@${redisServerName}.redis.cache.windows.net'
+    secretValue: 'rediss://:${redisCache.listKeys().primaryKey}@${redisCache.name}.redis.cache.windows.net:6380'
+  }
+}
+
+resource diagnosticsSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: '${redisServerName}-diagnostics'
+  scope: redisCache
+  properties: {
+    logs: [
+      {
+        category: null
+        categoryGroup: 'audit'
+        enabled: true
+        retentionPolicy: {
+          days: 5
+          enabled: false
+        }
+      }
+      {
+        category: null
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          days:5
+          enabled: false
+        }
+      }
+    ]
+    workspaceId: logAnalyticsWorkspaceId
   }
 }
