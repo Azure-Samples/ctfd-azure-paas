@@ -1,7 +1,7 @@
 # CTFd on Azure PaaS
 
 This project sets up a self-hosted, secured [CTFd][ctfd] environment, using Azure PaaS, that is easy to maintain.
-It supports the *Capture-the-Flag with CTFd on Azure PaaS* content on the [Azure Architecture Center](link.com TODO:). 
+It supports the *Capture-the-Flag with CTFd on Azure PaaS* content on the [Azure Architecture Center](link.com TODO:).
 
 ## Features
 
@@ -41,8 +41,8 @@ az deployment group create --resource-group $RESOURCE_GROUP_NAME --template-file
 
 ### Access and Configure CTFd
 
-* Navigate your browser to the App Service URL, in the form of *https://[YOUR APP SERVICE NAME].azurewebsites.net*
-* Configure your Capture the Flag event using the administrator dashboard. more info [here](https://docs.ctfd.io/tutorials/getting-started) 
+* Navigate your browser to the App Service URL, in the form of '*https://[YOUR APP SERVICE NAME].azurewebsites.net*'
+* Configure your Capture the Flag event using the administrator dashboard. more info [here](https://docs.ctfd.io/tutorials/getting-started)
 
 ### Troubleshooting and debugging
 
@@ -78,11 +78,11 @@ The template deployment can be further configured using the following parameters
 * **vnet** - Deploy the solution with VNet. Defaults to True
 * **redisSkuName** - Azure Cache for Redis SKU Name. More info at [Azure Cache for Redis Pricing][redis-pricing]
 * **redisSkuSize** - Azure Cache for Redis SKU Size. More info at [Azure Cache for Redis Pricing][redis-pricing]
-* **administratorLogin** - Admin Login of Azure Database for MariaDB 
+* **administratorLogin** - Admin Login of Azure Database for MariaDB
 * **administratorLoginPassword** - Admin Password of Azure Database for MariaDB
 * **databaseVCores** -Azure Database for MariaDB VCores. More info at [Azure Database for MariaDB Pricing][mariadb-pricing]
 * **appServicePlanSkuName** - Azure App Service Plan SKU Name. More info at [Azure App Service Pricing][app-service-pricing]
-* **webAppName** - Azure App Service Name. Controls the DNS name of the CTF website.
+* **webAppName** - Azure App Service Name. Controls the DNS name of the CTF web site.
 
 ## Resources
 
