@@ -16,6 +16,7 @@ This project provides the following features:
 * Log Management with [Azure Log Analytics][log-analytics].
 * Adjustable level of network isolation: The solution can be provisioned either with or without virtual network. Private networking is provided using [Private Endpoints][private-endpoint] and [App Service VNet Integration][vnet-integration].
 * Custom CTFd container image built and hosted on [Azure Container Registry][container-registry] with certificates to allow TLS connectivity to [Azure Database for MariaDB][mariadb].
+  * The image is based off the community CTFd image layered with the certificate required to communicate with Azure [Database for MariaDB over TLS](https://learn.microsoft.com/en-us/azure/mariadb/concepts-ssl-connection-security).
 
 ## Getting Started
 
@@ -83,6 +84,10 @@ The template deployment can be further configured using the following parameters
 * **databaseVCores** -Azure Database for MariaDB VCores. More info at [Azure Database for MariaDB Pricing][mariadb-pricing]
 * **appServicePlanSkuName** - Azure App Service Plan SKU Name. More info at [Azure App Service Pricing][app-service-pricing]
 * **webAppName** - Azure App Service Name. Controls the DNS name of the CTF site.
+
+## Contribute to this project
+
+Follow the [Contribution Guide](./CONTRIBUTING.md)
 
 ## Resources
 
