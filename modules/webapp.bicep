@@ -179,3 +179,5 @@ resource diagnosticsSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-p
     workspaceId: logAnalyticsWorkspaceId
   }
 }
+
+output outboundIpAdresses string = webApp.properties.outboundIpAddresses

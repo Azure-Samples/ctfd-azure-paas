@@ -59,7 +59,8 @@ resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLin
 }
 
 resource pvtEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-05-01' = {
-  name: '${privateEndpointName}/default'
+  name: 'default'
+  parent: privateEndpoint
   properties: {
     privateDnsZoneConfigs: [
       {
@@ -70,7 +71,4 @@ resource pvtEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
       }
     ]
   }
-  dependsOn: [
-    privateEndpoint
-  ]
 }
