@@ -1,0 +1,6 @@
+---
+##########################
+## Hadolint config file ##
+##########################
+
+failure-threshold: error
