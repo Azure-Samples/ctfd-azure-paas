@@ -29,11 +29,11 @@ This project provides the following features:
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure-Samples%2Fctfd-azure-paas%2Fmain%2Fazuredeploy.json)
 
-
 ```bash
 git clone https://github.com/Azure-Samples/ctfd-azure-paas.git
 cd ctfd-azure-paas
 
+# This is bash syntax. if using Powershell, add $ sign before the assignments (i.e. $DB_PASSWORD='YOUR PASSWORD')
 DB_PASSWORD='YOUR PASSWORD'
 RESOURCE_GROUP_NAME='RESOURCE GROUP NAME'
 
@@ -56,7 +56,7 @@ By default the solution isolates network traffic from the CTFd App Service to th
 You may reduce the solution complexity and potentially optimize cost by provisioning it without network isolation using the following command:
 
 ```bash
-az deployment group create --resource-group $RESOURCE_GROUP_NAME --template-file ctfd.bicep --parameters administratorLoginPassword=$DB_PASSWORD  --vnet False
+az deployment group create --resource-group $RESOURCE_GROUP_NAME --template-file ctfd.bicep --parameters administratorLoginPassword=$DB_PASSWORD --parameters vnet=False
 ```
 
 When provisioing the solution without a virtual network, the archicture diagram should look like this:

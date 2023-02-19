@@ -26,8 +26,14 @@ param keyVaultName string
 @description('Log Anaytics Workspace Id')
 param logAnalyticsWorkspaceId string
 
+@description('Outbound IP adresses of CTF Web App. Required for the non-vnet scenario')
+param webAppOutboundIpAdresses string
+
 @description('Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet.')
 var tenantId = subscription().tenantId
+
+# map the comma-separated string into a json
+var networkAcls = vnet ? { defaultAction: 'Deny', bypass: 'AzureServices' } : { defaultAction: 'Allow', ipRules: map(split(webAppOutboundIpAdresses, ','), ip => { value: ip }) }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   name: keyVaultName
@@ -40,15 +46,12 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
       name: skuName
       family: 'A'
     }
-    networkAcls: {
-      defaultAction: 'Deny'
-      bypass: 'AzureServices'
-    }
+    networkAcls: networkAcls
   }
 }
 
 resource kvRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid('4633458b-17de-408a-b874-0445c86b69e6',readerPrincipalId,keyVault.id)
+  name: guid('4633458b-17de-408a-b874-0445c86b69e6', readerPrincipalId, keyVault.id)
   scope: keyVault
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
@@ -89,7 +92,7 @@ resource diagnosticsSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-p
         categoryGroup: 'allLogs'
         enabled: true
         retentionPolicy: {
-          days:5
+          days: 5
           enabled: false
         }
       }

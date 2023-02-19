@@ -2,13 +2,13 @@
 param location string
 
 @description('Name of the VNet')
-var virtualNetworkName = 'ctf-vnet'
+param virtualNetworkName string
 
 @description('Name of the internal resources subnet')
-var internalResourcesSubnetName = 'internal_resources_subnet'
+param internalResourcesSubnetName string
 
 @description('Name of the public resources subnet')
-var publicResourcesSubnetName = 'public_resources_subnet'
+param publicResourcesSubnetName string
 
 @description('CIDR of the virtual network')
 var virtualNetworkCIDR = '10.200.0.0/16'
@@ -55,8 +55,3 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
   }
 }
 
-output virtualNetworkName string = virtualNetworkName
-
-output internalResourcesSubnetName string = internalResourcesSubnetName
-
-output publicResourcesSubnetName string = publicResourcesSubnetName

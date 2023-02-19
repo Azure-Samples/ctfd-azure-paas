@@ -74,6 +74,15 @@ var ctfCacheSecretName = 'ctfd-cache-url'
 @description('Name of the key vault secret holding the database connection string')
 var ctfDatabaseSecretName = 'ctfd-db-url'
 
+@description('Name of the VNet')
+var virtualNetworkName = 'ctf-vnet'
+
+@description('Name of the internal resources subnet')
+var internalResourcesSubnetName = 'internal_resources_subnet'
+
+@description('Name of the public resources subnet')
+var publicResourcesSubnetName = 'public_resources_subnet'
+
 // Scope
 targetScope = 'resourceGroup'
 
@@ -107,6 +116,9 @@ module vnetModule 'modules/vnet.bicep' = if (vnet) {
   name: 'vnetDeploy'
   params: {
     location: resourcesLocation
+    virtualNetworkName: virtualNetworkName
+    internalResourcesSubnetName: internalResourcesSubnetName
+    publicResourcesSubnetName: publicResourcesSubnetName
   }
 }
 
@@ -114,13 +126,13 @@ module vnetModule 'modules/vnet.bicep' = if (vnet) {
 module ctfWebAppModule 'modules/webapp.bicep' = {
   name: 'ctfDeploy'
   params: {
-    virtualNetworkName: vnetModule.outputs.virtualNetworkName
+    virtualNetworkName: virtualNetworkName
     location: resourcesLocation
     appServicePlanSkuName: appServicePlanSkuName
     keyVaultName: keyVaultName
     ctfCacheSecretName: ctfCacheSecretName
     ctfDatabaseSecretName: ctfDatabaseSecretName
-    publicResourcesSubnetName: vnetModule.outputs.publicResourcesSubnetName
+    publicResourcesSubnetName: publicResourcesSubnetName
     webAppName: webAppName
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
     acrImageName: acrModule.outputs.acrImage
@@ -138,11 +150,12 @@ module akvModule 'modules/keyvault.bicep' = {
   params: {
     location: resourcesLocation
     readerPrincipalId: managedIdentity.properties.principalId
-    internalResourcesSubnetName: vnetModule.outputs.internalResourcesSubnetName
-    virtualNetworkName: vnetModule.outputs.virtualNetworkName
+    internalResourcesSubnetName: internalResourcesSubnetName
+    virtualNetworkName: virtualNetworkName
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
     vnet: vnet
     keyVaultName: keyVaultName
+    webAppOutboundIpAdresses: ctfWebAppModule.outputs.outboundIpAdresses
   }
 }
 
@@ -150,8 +163,8 @@ module akvModule 'modules/keyvault.bicep' = {
 module redisModule 'modules/redis.bicep' = {
   name: 'redisDeploy'
   params: {
-    internalResourcesSubnetName: vnetModule.outputs.internalResourcesSubnetName
-    virtualNetworkName: vnetModule.outputs.virtualNetworkName
+    internalResourcesSubnetName: internalResourcesSubnetName
+    virtualNetworkName: virtualNetworkName
     location: resourcesLocation
     vnet: vnet
     ctfCacheSecretName: ctfCacheSecretName
@@ -168,8 +181,8 @@ module mariaDbModule 'modules/mariadb.bicep' = {
   params: {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
-    internalResourcesSubnetName: vnetModule.outputs.internalResourcesSubnetName
-    virtualNetworkName: vnetModule.outputs.virtualNetworkName
+    internalResourcesSubnetName: internalResourcesSubnetName
+    virtualNetworkName: virtualNetworkName
     location: resourcesLocation
     vnet: vnet
     ctfDbSecretName: ctfDatabaseSecretName
