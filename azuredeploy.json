@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.14.46.61228",
-      "templateHash": "10474845034021229239"
+      "templateHash": "16258812508420888486"
     }
   },
   "parameters": {
@@ -111,7 +111,10 @@
     "containerRegistrySku": "Basic",
     "keyVaultName": "[format('ctfd-kv-{0}', uniqueString(resourceGroup().id))]",
     "ctfCacheSecretName": "ctfd-cache-url",
-    "ctfDatabaseSecretName": "ctfd-db-url"
+    "ctfDatabaseSecretName": "ctfd-db-url",
+    "virtualNetworkName": "ctf-vnet",
+    "internalResourcesSubnetName": "internal_resources_subnet",
+    "publicResourcesSubnetName": "public_resources_subnet"
   },
   "resources": [
     {
@@ -403,6 +406,15 @@
         "parameters": {
           "location": {
             "value": "[parameters('resourcesLocation')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "internalResourcesSubnetName": {
+            "value": "[variables('internalResourcesSubnetName')]"
+          },
+          "publicResourcesSubnetName": {
+            "value": "[variables('publicResourcesSubnetName')]"
           }
         },
         "template": {
@@ -412,7 +424,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.14.46.61228",
-              "templateHash": "5348950361305494392"
+              "templateHash": "9991956190783426162"
             }
           },
           "parameters": {
@@ -421,12 +433,27 @@
               "metadata": {
                 "description": "Location for all resources."
               }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the VNet"
+              }
+            },
+            "internalResourcesSubnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the internal resources subnet"
+              }
+            },
+            "publicResourcesSubnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the public resources subnet"
+              }
             }
           },
           "variables": {
-            "virtualNetworkName": "ctf-vnet",
-            "internalResourcesSubnetName": "internal_resources_subnet",
-            "publicResourcesSubnetName": "public_resources_subnet",
             "virtualNetworkCIDR": "10.200.0.0/16",
             "publicResourcesSubnetCIDR": "10.200.1.0/26",
             "internalResourcesSubnetCIDR": "10.200.2.0/28"
@@ -435,7 +462,7 @@
             {
               "type": "Microsoft.Network/virtualNetworks",
               "apiVersion": "2020-06-01",
-              "name": "[variables('virtualNetworkName')]",
+              "name": "[parameters('virtualNetworkName')]",
               "location": "[parameters('location')]",
               "properties": {
                 "addressSpace": {
@@ -445,14 +472,14 @@
                 },
                 "subnets": [
                   {
-                    "name": "[variables('internalResourcesSubnetName')]",
+                    "name": "[parameters('internalResourcesSubnetName')]",
                     "properties": {
                       "addressPrefix": "[variables('internalResourcesSubnetCIDR')]",
                       "privateEndpointNetworkPolicies": "Disabled"
                     }
                   },
                   {
-                    "name": "[variables('publicResourcesSubnetName')]",
+                    "name": "[parameters('publicResourcesSubnetName')]",
                     "properties": {
                       "addressPrefix": "[variables('publicResourcesSubnetCIDR')]",
                       "delegations": [
@@ -469,21 +496,7 @@
                 ]
               }
             }
-          ],
-          "outputs": {
-            "virtualNetworkName": {
-              "type": "string",
-              "value": "[variables('virtualNetworkName')]"
-            },
-            "internalResourcesSubnetName": {
-              "type": "string",
-              "value": "[variables('internalResourcesSubnetName')]"
-            },
-            "publicResourcesSubnetName": {
-              "type": "string",
-              "value": "[variables('publicResourcesSubnetName')]"
-            }
-          }
+          ]
         }
       },
       "metadata": {
@@ -501,7 +514,7 @@
         "mode": "Incremental",
         "parameters": {
           "virtualNetworkName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.virtualNetworkName.value]"
+            "value": "[variables('virtualNetworkName')]"
           },
           "location": {
             "value": "[parameters('resourcesLocation')]"
@@ -519,7 +532,7 @@
             "value": "[variables('ctfDatabaseSecretName')]"
           },
           "publicResourcesSubnetName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.publicResourcesSubnetName.value]"
+            "value": "[variables('publicResourcesSubnetName')]"
           },
           "webAppName": {
             "value": "[parameters('webAppName')]"
@@ -550,7 +563,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.14.46.61228",
-              "templateHash": "12766745455447733604"
+              "templateHash": "4425213144176200912"
             }
           },
           "parameters": {
@@ -792,14 +805,19 @@
                 "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
               ]
             }
-          ]
+          ],
+          "outputs": {
+            "outboundIpAdresses": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')), '2022-03-01').outboundIpAddresses]"
+            }
+          }
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'acrDeploy')]",
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]",
-        "[resourceId('Microsoft.Resources/deployments', 'vnetDeploy')]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]"
       ],
       "metadata": {
         "description": "Deploys Azure App Service for containers"
@@ -822,10 +840,10 @@
             "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity'), '2018-11-30').principalId]"
           },
           "internalResourcesSubnetName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.internalResourcesSubnetName.value]"
+            "value": "[variables('internalResourcesSubnetName')]"
           },
           "virtualNetworkName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.virtualNetworkName.value]"
+            "value": "[variables('virtualNetworkName')]"
           },
           "logAnalyticsWorkspaceId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2020-10-01').outputs.logAnalyticsWorkspaceId.value]"
@@ -835,6 +853,9 @@
           },
           "keyVaultName": {
             "value": "[variables('keyVaultName')]"
+          },
+          "webAppOutboundIpAdresses": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfDeploy'), '2020-10-01').outputs.outboundIpAdresses.value]"
           }
         },
         "template": {
@@ -844,7 +865,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.14.46.61228",
-              "templateHash": "14965092496701937575"
+              "templateHash": "9856506987793127691"
             }
           },
           "parameters": {
@@ -900,10 +921,17 @@
               "metadata": {
                 "description": "Log Anaytics Workspace Id"
               }
+            },
+            "webAppOutboundIpAdresses": {
+              "type": "string",
+              "metadata": {
+                "description": "Outbound IP adresses of CTF Web App. Required for the non-vnet scenario"
+              }
             }
           },
           "variables": {
-            "tenantId": "[subscription().tenantId]"
+            "tenantId": "[subscription().tenantId]",
+            "networkAcls": "[if(parameters('vnet'), createObject('defaultAction', 'Deny', 'bypass', 'AzureServices'), createObject('defaultAction', 'Allow', 'ipRules', map(split(parameters('webAppOutboundIpAdresses'), ','), lambda('ip', createObject('value', lambdaVariables('ip'))))))]"
           },
           "resources": [
             {
@@ -919,10 +947,7 @@
                   "name": "[parameters('skuName')]",
                   "family": "A"
                 },
-                "networkAcls": {
-                  "defaultAction": "Deny",
-                  "bypass": "AzureServices"
-                }
+                "networkAcls": "[variables('networkAcls')]"
               }
             },
             {
@@ -1011,7 +1036,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.14.46.61228",
-                      "templateHash": "17772527866515569466"
+                      "templateHash": "8021145403467125157"
                     }
                   },
                   "parameters": {
@@ -1106,7 +1131,7 @@
                     {
                       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
                       "apiVersion": "2021-05-01",
-                      "name": "[format('{0}/default', parameters('privateEndpointName'))]",
+                      "name": "[format('{0}/{1}', parameters('privateEndpointName'), 'default')]",
                       "properties": {
                         "privateDnsZoneConfigs": [
                           {
@@ -1141,8 +1166,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'ctfDeploy')]",
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]",
-        "[resourceId('Microsoft.Resources/deployments', 'vnetDeploy')]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]"
       ],
       "metadata": {
         "description": "Deploys Azure Key Vault"
@@ -1159,10 +1183,10 @@
         "mode": "Incremental",
         "parameters": {
           "internalResourcesSubnetName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.internalResourcesSubnetName.value]"
+            "value": "[variables('internalResourcesSubnetName')]"
           },
           "virtualNetworkName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.virtualNetworkName.value]"
+            "value": "[variables('virtualNetworkName')]"
           },
           "location": {
             "value": "[parameters('resourcesLocation')]"
@@ -1193,7 +1217,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.14.46.61228",
-              "templateHash": "4316874799347404380"
+              "templateHash": "10815514966698901881"
             }
           },
           "parameters": {
@@ -1343,7 +1367,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.14.46.61228",
-                      "templateHash": "17772527866515569466"
+                      "templateHash": "8021145403467125157"
                     }
                   },
                   "parameters": {
@@ -1438,7 +1462,7 @@
                     {
                       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
                       "apiVersion": "2021-05-01",
-                      "name": "[format('{0}/default', parameters('privateEndpointName'))]",
+                      "name": "[format('{0}/{1}', parameters('privateEndpointName'), 'default')]",
                       "properties": {
                         "privateDnsZoneConfigs": [
                           {
@@ -1532,8 +1556,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy')]",
-        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
-        "[resourceId('Microsoft.Resources/deployments', 'vnetDeploy')]"
+        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]"
       ],
       "metadata": {
         "description": "Deploys Azure Cache for Redis and a Key Vault secret with its connection string"
@@ -1556,10 +1579,10 @@
             "value": "[parameters('administratorLoginPassword')]"
           },
           "internalResourcesSubnetName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.internalResourcesSubnetName.value]"
+            "value": "[variables('internalResourcesSubnetName')]"
           },
           "virtualNetworkName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2020-10-01').outputs.virtualNetworkName.value]"
+            "value": "[variables('virtualNetworkName')]"
           },
           "location": {
             "value": "[parameters('resourcesLocation')]"
@@ -1587,7 +1610,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.14.46.61228",
-              "templateHash": "8400502857817746777"
+              "templateHash": "2181213069883941727"
             }
           },
           "parameters": {
@@ -1787,7 +1810,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.14.46.61228",
-                      "templateHash": "17772527866515569466"
+                      "templateHash": "8021145403467125157"
                     }
                   },
                   "parameters": {
@@ -1882,7 +1905,7 @@
                     {
                       "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
                       "apiVersion": "2021-05-01",
-                      "name": "[format('{0}/default', parameters('privateEndpointName'))]",
+                      "name": "[format('{0}/{1}', parameters('privateEndpointName'), 'default')]",
                       "properties": {
                         "privateDnsZoneConfigs": [
                           {
@@ -1973,8 +1996,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy')]",
-        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
-        "[resourceId('Microsoft.Resources/deployments', 'vnetDeploy')]"
+        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]"
       ],
       "metadata": {
         "description": "Deploys Azure Database for MariaDB and a Key Vault secret with its connection string"
