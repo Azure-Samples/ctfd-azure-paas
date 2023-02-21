@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.14.46.61228",
-      "templateHash": "16258812508420888486"
+      "templateHash": "9820263020729921978"
     }
   },
   "parameters": {
@@ -120,7 +120,7 @@
     {
       "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
       "apiVersion": "2018-11-30",
-      "name": "ctf-managed-identity",
+      "name": "[format('ctf-mi-{0}', uniqueString(resourceGroup().id))]",
       "location": "[parameters('resourcesLocation')]"
     },
     {
@@ -215,10 +215,10 @@
             "value": "[variables('containerRegistrySku')]"
           },
           "managedIdentityId": {
-            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]"
+            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
           },
           "managedIdentityPrincipalId": {
-            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity'), '2018-11-30').principalId]"
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id))), '2018-11-30').principalId]"
           }
         },
         "template": {
@@ -387,7 +387,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
       ],
       "metadata": {
         "description": "Deploys Azure Container Registry and build a custom CTFd docker image"
@@ -547,10 +547,10 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'acrDeploy'), '2020-10-01').outputs.registryName.value]"
           },
           "managedIdentityClientId": {
-            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity'), '2018-11-30').clientId]"
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id))), '2018-11-30').clientId]"
           },
           "managedIdentityId": {
-            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]"
+            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
           },
           "vnet": {
             "value": "[parameters('vnet')]"
@@ -817,7 +817,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'acrDeploy')]",
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
       ],
       "metadata": {
         "description": "Deploys Azure App Service for containers"
@@ -837,7 +837,7 @@
             "value": "[parameters('resourcesLocation')]"
           },
           "readerPrincipalId": {
-            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity'), '2018-11-30').principalId]"
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id))), '2018-11-30').principalId]"
           },
           "internalResourcesSubnetName": {
             "value": "[variables('internalResourcesSubnetName')]"
@@ -1166,7 +1166,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'ctfDeploy')]",
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
-        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', 'ctf-managed-identity')]"
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
       ],
       "metadata": {
         "description": "Deploys Azure Key Vault"
