@@ -87,7 +87,7 @@ var publicResourcesSubnetName = 'public_resources_subnet'
 targetScope = 'resourceGroup'
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name: 'ctf-managed-identity'
+  name: 'ctf-mi-${uniqueString(resourceGroup().id)}'
   location: resourcesLocation
 }
 
