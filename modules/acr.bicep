@@ -67,7 +67,7 @@ resource contributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018
 }
 
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+  name: guid(resourceGroup().id, 'b24988ac-6180-42a0-ab88-20f7382dd24c')
   scope: acrResource
   properties: {
     principalId: managedIdentityPrincipalId
