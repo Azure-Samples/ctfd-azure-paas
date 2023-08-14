@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.20.4.51522",
-      "templateHash": "6963576488124777768"
+      "templateHash": "14029566981341933198"
     }
   },
   "parameters": {
@@ -1610,7 +1610,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.20.4.51522",
-              "templateHash": "17150007301883739889"
+              "templateHash": "6614454913510937586"
             }
           },
           "parameters": {
@@ -1945,7 +1945,7 @@
                     "value": "[parameters('ctfDbSecretName')]"
                   },
                   "secretValue": {
-                    "value": "[format('mysql+pymysql://{0}%40{1}:{2}@{3}.mariadb.database.azure.com/ctfd?ssl_ca=/opt/certificates/BaltimoreCyberTrustRoot.crt.pem', parameters('administratorLogin'), variables('mariaServerName'), parameters('administratorLoginPassword'), variables('mariaServerName'))]"
+                    "value": "[format('mysql+pymysql://{0}@{1}:{2}@{3}.mariadb.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootG2.crt.pem', parameters('administratorLogin'), variables('mariaServerName'), parameters('administratorLoginPassword'), variables('mariaServerName'))]"
                   }
                 },
                 "template": {
