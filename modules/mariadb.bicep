@@ -100,7 +100,7 @@ module cacheSecret 'keyvaultsecret.bicep' = {
   params: {
     keyVaultName: keyVaultName
     secretName: ctfDbSecretName
-    secretValue: 'mysql+pymysql://${administratorLogin}%40${mariaServerName}.mariadb.database.azure.com:${administratorLoginPassword}@${mariaServerName}.mariadb.database.azure.com/ctfd?ssl_ca=/opt/certificates/BaltimoreCyberTrustRoot.crt.pem'
+    secretValue: 'mysql+pymysql://${administratorLogin}%40${mariaServerName}:${administratorLoginPassword}@${mariaServerName}.mariadb.database.azure.com/ctfd?ssl_ca=/opt/certificates/BaltimoreCyberTrustRoot.crt.pem'
   }
 }
 
