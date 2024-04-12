@@ -11,10 +11,10 @@ param internalResourcesSubnetName string
 param publicResourcesSubnetName string
 
 @description('CIDR of the virtual network')
-var virtualNetworkCIDR = '10.200.0.0/16'
+param virtualNetworkCIDR string
 
 @description('CIDR of the public resources subnet')
-var publicResourcesSubnetCIDR = '10.200.1.0/26'
+param publicResourcesSubnetCIDR string
 
 @description('CIDR of the internal resources subnet')
 var internalResourcesSubnetCIDR = '10.200.2.0/28'
