@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.27.1.19265",
-      "templateHash": "6450229374937201411"
+      "templateHash": "12723020540904058874"
     }
   },
   "parameters": {
@@ -66,18 +66,16 @@
         "description": "Database administrator password. Minimum 8 characters and maximum 128 characters. Password must contain characters from three of the following categories: English uppercase letters, English lowercase letters, numbers, and non-alphanumeric characters."
       }
     },
-    "databaseVCores": {
-      "type": "int",
-      "defaultValue": 2,
+    "mysqlType": {
+      "type": "string",
+      "defaultValue": "Development",
       "allowedValues": [
-        2,
-        4,
-        8,
-        16,
-        32
+        "Development",
+        "SmallMedium",
+        "BusinessCritical"
       ],
       "metadata": {
-        "description": "Database vCores count"
+        "description": "MySQL Type"
       }
     },
     "appServicePlanSkuName": {
@@ -1565,7 +1563,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "mariaDbDeploy",
+      "name": "mysqlDbDeploy",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1596,8 +1594,8 @@
           "keyVaultName": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy'), '2022-09-01').outputs.keyVaultName.value]"
           },
-          "databaseVCores": {
-            "value": "[parameters('databaseVCores')]"
+          "mysqlWorkloadType": {
+            "value": "[parameters('mysqlType')]"
           },
           "logAnalyticsWorkspaceId": {
             "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
@@ -1610,7 +1608,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.27.1.19265",
-              "templateHash": "17705013361612767903"
+              "templateHash": "5998988668191103479"
             }
           },
           "parameters": {
@@ -1632,12 +1630,6 @@
               "minLength": 8,
               "metadata": {
                 "description": "Database administrator password"
-              }
-            },
-            "databaseVCores": {
-              "type": "int",
-              "metadata": {
-                "description": "Database vCores count"
               }
             },
             "virtualNetworkName": {
@@ -1675,83 +1667,100 @@
               "metadata": {
                 "description": "Log Anaytics Workspace Id"
               }
+            },
+            "mysqlWorkloadType": {
+              "type": "string",
+              "allowedValues": [
+                "Development",
+                "SmallMedium",
+                "BusinessCritical"
+              ],
+              "metadata": {
+                "description": "MySql Workload Type"
+              }
             }
           },
           "variables": {
-            "mariaServerName": "[format('ctfd-mariadb-{0}', uniqueString(resourceGroup().id))]"
+            "mysqlServerName": "[format('ctfd-mysql-{0}', uniqueString(resourceGroup().id))]",
+            "tier": "[if(equals(parameters('mysqlWorkloadType'), 'Development'), 'Burstable', if(equals(parameters('mysqlWorkloadType'), 'SmallMedium'), 'GeneralPurpose', 'MemoryOptimized'))]",
+            "skuName": "[if(equals(parameters('mysqlWorkloadType'), 'Development'), 'Standard_B1ms', if(equals(parameters('mysqlWorkloadType'), 'SmallMedium'), 'Standard_E2ads_v5', 'Standard_E2ads_v5'))]",
+            "storageSizeGB": "[if(equals(parameters('mysqlWorkloadType'), 'Development'), 20, 128)]",
+            "iops": "[if(equals(parameters('mysqlWorkloadType'), 'Development'), 360, 2000)]"
           },
           "resources": [
             {
-              "type": "Microsoft.DBforMariaDB/servers/configurations",
-              "apiVersion": "2018-06-01",
-              "name": "[format('{0}/{1}', variables('mariaServerName'), 'character_set_server')]",
+              "type": "Microsoft.DBforMySQL/flexibleServers",
+              "apiVersion": "2023-10-01-preview",
+              "name": "[variables('mysqlServerName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[variables('skuName')]",
+                "tier": "[variables('tier')]"
+              },
+              "properties": {
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+                "storage": {
+                  "autoGrow": "Enabled",
+                  "iops": "[variables('iops')]",
+                  "storageSizeGB": "[variables('storageSizeGB')]"
+                },
+                "network": {
+                  "publicNetworkAccess": "[if(parameters('vnet'), 'Disabled', 'Enabled')]"
+                },
+                "createMode": "Default",
+                "version": "8.0.21",
+                "backup": {
+                  "backupRetentionDays": 7,
+                  "geoRedundantBackup": "Disabled"
+                },
+                "highAvailability": {
+                  "mode": "Disabled"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.DBforMySQL/flexibleServers/configurations",
+              "apiVersion": "2023-06-30",
+              "name": "[format('{0}/{1}', variables('mysqlServerName'), 'collation_server')]",
               "properties": {
                 "source": "user-override",
-                "value": "utf8mb4"
+                "value": "UTF8MB4_UNICODE_CI"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DBforMariaDB/servers', variables('mariaServerName'))]"
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('mysqlServerName'))]"
               ]
             },
             {
-              "type": "Microsoft.DBforMariaDB/servers/configurations",
-              "apiVersion": "2018-06-01",
-              "name": "[format('{0}/{1}', variables('mariaServerName'), 'collation_server')]",
+              "type": "Microsoft.DBforMySQL/flexibleServers/databases",
+              "apiVersion": "2023-06-30",
+              "name": "[format('{0}/{1}', variables('mysqlServerName'), 'ctfd')]",
               "properties": {
-                "source": "user-override",
-                "value": "utf8mb4_unicode_ci"
+                "charset": "utf8mb4",
+                "collation": "utf8mb4_unicode_ci"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DBforMariaDB/servers', variables('mariaServerName'))]"
-              ]
-            },
-            {
-              "type": "Microsoft.DBforMariaDB/servers/configurations",
-              "apiVersion": "2018-06-01",
-              "name": "[format('{0}/{1}', variables('mariaServerName'), 'wait_timeout')]",
-              "properties": {
-                "source": "user-override",
-                "value": "28800"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.DBforMariaDB/servers', variables('mariaServerName'))]"
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('mysqlServerName'))]"
               ]
             },
             {
               "condition": "[not(parameters('vnet'))]",
-              "type": "Microsoft.DBforMariaDB/servers/firewallRules",
-              "apiVersion": "2018-06-01",
-              "name": "[format('{0}/{1}', variables('mariaServerName'), 'AllowAllWindowsAzureIps')]",
+              "type": "Microsoft.DBforMySQL/flexibleServers/firewallRules",
+              "apiVersion": "2023-06-30",
+              "name": "[format('{0}/{1}', variables('mysqlServerName'), 'AllowAllAzureServicesAndResourcesWithinAzureIps_2024-5-24_16-27-0')]",
               "properties": {
                 "startIpAddress": "0.0.0.0",
                 "endIpAddress": "0.0.0.0"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DBforMariaDB/servers', variables('mariaServerName'))]"
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('mysqlServerName'))]"
               ]
-            },
-            {
-              "type": "Microsoft.DBforMariaDB/servers",
-              "apiVersion": "2018-06-01",
-              "name": "[variables('mariaServerName')]",
-              "location": "[parameters('location')]",
-              "sku": {
-                "name": "[format('GP_Gen5_{0}', parameters('databaseVCores'))]",
-                "size": "5120"
-              },
-              "properties": {
-                "createMode": "Default",
-                "version": "10.3",
-                "administratorLogin": "[parameters('administratorLogin')]",
-                "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
-                "publicNetworkAccess": "[if(parameters('vnet'), 'Disabled', 'Enabled')]"
-              }
             },
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.DBforMariaDB/servers/{0}', variables('mariaServerName'))]",
-              "name": "[format('{0}-diagnostics', variables('mariaServerName'))]",
+              "scope": "[format('Microsoft.DBforMySQL/flexibleServers/{0}', variables('mysqlServerName'))]",
+              "name": "[format('{0}-diagnostics', variables('mysqlServerName'))]",
               "properties": {
                 "logs": [
                   {
@@ -1767,14 +1776,14 @@
                 "workspaceId": "[parameters('logAnalyticsWorkspaceId')]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DBforMariaDB/servers', variables('mariaServerName'))]"
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('mysqlServerName'))]"
               ]
             },
             {
               "condition": "[parameters('vnet')]",
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "mariaDbPrivateEndpointDeploy",
+              "name": "sqlDbPrivateEndpointDeploy",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -1788,16 +1797,16 @@
                     "value": "[parameters('internalResourcesSubnetName')]"
                   },
                   "resuorceId": {
-                    "value": "[resourceId('Microsoft.DBforMariaDB/servers', variables('mariaServerName'))]"
+                    "value": "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('mysqlServerName'))]"
                   },
                   "resuorceGroupId": {
-                    "value": "mariadbServer"
+                    "value": "mysqlServer"
                   },
                   "privateDnsZoneName": {
-                    "value": "privatelink.mariadb.database.azure.com"
+                    "value": "privatelink.mysql.database.azure.com"
                   },
                   "privateEndpointName": {
-                    "value": "mariadb_private_endpoint"
+                    "value": "sqlserverdb_private_endpoint"
                   },
                   "location": {
                     "value": "[parameters('location')]"
@@ -1925,13 +1934,13 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DBforMariaDB/servers', variables('mariaServerName'))]"
+                "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('mysqlServerName'))]"
               ]
             },
             {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "mariaDbKeyDeploy",
+              "name": "sqlDbKeyDeploy",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -1945,7 +1954,7 @@
                     "value": "[parameters('ctfDbSecretName')]"
                   },
                   "secretValue": {
-                    "value": "[format('mysql+pymysql://{0}@{1}:{2}@{3}.mariadb.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootG2.crt.pem', parameters('administratorLogin'), variables('mariaServerName'), parameters('administratorLoginPassword'), variables('mariaServerName'))]"
+                    "value": "[format('mysql+pymysql://{0}@{1}:{2}@{3}.mysql.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootCA.crt.pem', parameters('administratorLogin'), variables('mysqlServerName'), parameters('administratorLoginPassword'), variables('mysqlServerName'))]"
                   }
                 },
                 "template": {
@@ -1999,7 +2008,7 @@
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]"
       ],
       "metadata": {
-        "description": "Deploys Azure Database for MariaDB and a Key Vault secret with its connection string"
+        "description": "Deploys Azure Database for MySql and a Key Vault secret with its connection string"
       }
     }
   ]
