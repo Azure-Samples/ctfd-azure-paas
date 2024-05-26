@@ -13,8 +13,11 @@ param administratorLoginPassword string
 @description('Name of the VNet')
 param virtualNetworkName string
 
-@description('Name of the internal resources subnet')
-param internalResourcesSubnetName string
+@description('ID of the vnet')
+param vnetId string
+
+@description('ID of the subnet')
+param databaseSubnetId string
 
 @description('Name of the key vault')
 param keyVaultName string
@@ -39,13 +42,18 @@ param mysqlWorkloadType string
 @description('Server Name for Azure database for MySql')
 var mysqlServerName = 'ctfd-mysql-${uniqueString(resourceGroup().id)}'
 
- var tier = mysqlWorkloadType == 'Development' ? 'Burstable' : mysqlWorkloadType == 'SmallMedium' ? 'GeneralPurpose' : 'MemoryOptimized'
- var skuName = mysqlWorkloadType == 'Development' ? 'Standard_B1ms' : mysqlWorkloadType == 'SmallMedium' ? 'Standard_E2ads_v5' : 'Standard_E2ads_v5'
+var tier = mysqlWorkloadType == 'Development'
+  ? 'Burstable'
+  : mysqlWorkloadType == 'SmallMedium' ? 'GeneralPurpose' : 'MemoryOptimized'
+var skuName = mysqlWorkloadType == 'Development'
+  ? 'Standard_B1ms'
+  : mysqlWorkloadType == 'SmallMedium' ? 'Standard_E2ads_v5' : 'Standard_E2ads_v5'
 var storageSizeGB = mysqlWorkloadType == 'Development' ? 20 : 128
 var iops = mysqlWorkloadType == 'Development' ? 360 : 2000
 
 resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2023-10-01-preview' = {
   name: mysqlServerName
+  dependsOn: [vnetLink]
   location: location
   sku: {
     name: skuName
@@ -59,9 +67,15 @@ resource mysqlDbServer 'Microsoft.DBforMySQL/flexibleServers@2023-10-01-preview'
       iops: iops
       storageSizeGB: storageSizeGB
     }
-    network: {
-      publicNetworkAccess: vnet ? 'Disabled' : 'Enabled'
-    }
+    network: vnet
+      ? {
+          delegatedSubnetResourceId: databaseSubnetId
+          privateDnsZoneResourceId: dnszone.id
+          publicNetworkAccess: 'Disabled'
+        }
+      : {
+          publicNetworkAccess: 'Enabled'
+        }
 
     createMode: 'Default'
     version: '8.0.21'
@@ -102,19 +116,22 @@ resource ctdFirewallRule 'Microsoft.DBforMySQL/flexibleServers/firewallRules@202
   }
 }
 
-module privateEndpointModule 'privateendpoint.bicep' = if (vnet) {
-  name: 'sqlDbPrivateEndpointDeploy'
-  params: {
-    virtualNetworkName: virtualNetworkName
-    subnetName: internalResourcesSubnetName
-    resuorceId: mysqlDbServer.id
-    resuorceGroupId: 'mysqlServer'
-    privateDnsZoneName: 'privatelink.mysql.database.azure.com'
-    privateEndpointName: 'sqlserverdb_private_endpoint'
-    location: location
-  }
+resource dnszone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (vnet) {
+  name: '${mysqlServerName}.private.mysql.database.azure.com'
+  location: 'global'
 }
 
+resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (vnet) {
+  name: virtualNetworkName
+  parent: dnszone
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: vnetId
+    }
+  }
+}
 
 module sqlSecret 'keyvaultsecret.bicep' = {
   name: 'sqlDbKeyDeploy'

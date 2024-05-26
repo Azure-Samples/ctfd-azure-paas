@@ -81,6 +81,9 @@ var internalResourcesSubnetName = 'internal_resources_subnet'
 @description('Name of the public resources subnet')
 var publicResourcesSubnetName = 'public_resources_subnet'
 
+@description('Name of the database resources subnet')
+var databaseResourcesSubnetName = 'database_resources_subnet'
+
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: 'ctf-mi-${uniqueString(resourceGroup().id)}'
   location: resourcesLocation
@@ -114,6 +117,7 @@ module vnetModule 'modules/vnet.bicep' = if (vnet) {
     virtualNetworkName: virtualNetworkName
     internalResourcesSubnetName: internalResourcesSubnetName
     publicResourcesSubnetName: publicResourcesSubnetName
+    databaseResourcesSubnetName: databaseResourcesSubnetName
   }
 }
 
@@ -176,7 +180,8 @@ module mySqlDbModule 'modules/mysql.bicep' = {
   params: {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
-    internalResourcesSubnetName: internalResourcesSubnetName
+    vnetId: vnetModule.outputs.virtualNetworkId
+    databaseSubnetId: vnetModule.outputs.databaseResourcesSubnetId
     virtualNetworkName: virtualNetworkName
     location: resourcesLocation
     vnet: vnet
