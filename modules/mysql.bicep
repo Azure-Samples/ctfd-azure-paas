@@ -121,7 +121,7 @@ module sqlSecret 'keyvaultsecret.bicep' = {
   params: {
     keyVaultName: keyVaultName
     secretName: ctfDbSecretName
-    secretValue: 'mysql+pymysql://${administratorLogin}@${mysqlServerName}:${administratorLoginPassword}@${mysqlServerName}.mysql.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootCA.crt.pem'
+    secretValue: 'mysql+pymysql://${administratorLogin}:${administratorLoginPassword}@${mysqlServerName}.mysql.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootCA.crt.pem'
   }
 }
 
