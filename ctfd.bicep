@@ -33,15 +33,13 @@ param administratorLogin string = 'ctfd'
 @secure()
 param administratorLoginPassword string
 
-@description('Database vCores count')
+@description('MySQL Type')
 @allowed([
-  2
-  4
-  8
-  16
-  32
+  'Development'
+  'SmallMedium'
+  'BusinessCritical'
 ])
-param databaseVCores int = 2
+param mysqlType string = 'Development'
 
 @description('App Service Plan SKU name')
 @allowed([
@@ -82,9 +80,6 @@ var internalResourcesSubnetName = 'internal_resources_subnet'
 
 @description('Name of the public resources subnet')
 var publicResourcesSubnetName = 'public_resources_subnet'
-
-// Scope
-targetScope = 'resourceGroup'
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: 'ctf-mi-${uniqueString(resourceGroup().id)}'
@@ -175,9 +170,9 @@ module redisModule 'modules/redis.bicep' = {
   }
 }
 
-@description('Deploys Azure Database for MariaDB and a Key Vault secret with its connection string')
-module mariaDbModule 'modules/mariadb.bicep' = {
-  name: 'mariaDbDeploy'
+@description('Deploys Azure Database for MySql and a Key Vault secret with its connection string')
+module mySqlDbModule 'modules/mysql.bicep' = {
+  name: 'mysqlDbDeploy'
   params: {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
@@ -187,7 +182,7 @@ module mariaDbModule 'modules/mariadb.bicep' = {
     vnet: vnet
     ctfDbSecretName: ctfDatabaseSecretName
     keyVaultName: akvModule.outputs.keyVaultName
-    databaseVCores: databaseVCores
+    mysqlWorkloadType: mysqlType
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
   }
 }

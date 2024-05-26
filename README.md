@@ -11,12 +11,12 @@ This project provides the following features:
 
 * Infrastructure as Code with [Azure Bicep][bicep].
 * High scale that meets different team sizes with [Azure App Service Web App for Containers][app-service].
-* Backend database and cache provided with Azure PaaS [Database for MariaDB][mariadb] and [Cache for Redis][redis].
+* Backend database and cache provided with Azure PaaS [Database for MySQL][mysql] and [Cache for Redis][redis].
 * Secrets management using [Azure Key Vault][keyvault].
 * Log Management with [Azure Log Analytics][log-analytics].
 * Adjustable level of network isolation: The solution can be provisioned either with or without virtual network. Private networking is provided using [Private Endpoints][private-endpoint] and [App Service VNet Integration][vnet-integration].
-* Custom CTFd container image built and hosted on [Azure Container Registry][container-registry] with certificates to allow TLS connectivity to [Azure Database for MariaDB][mariadb].
-  * The image is based off the community CTFd image layered with the certificate required to communicate with Azure [Database for MariaDB over TLS](https://learn.microsoft.com/en-us/azure/mariadb/concepts-ssl-connection-security).
+* Custom CTFd container image built and hosted on [Azure Container Registry][container-registry] with certificates to allow TLS connectivity to [Azure Database for MySQL][mysql].
+  * The image is based off the community CTFd image layered with the certificate required to communicate with Azure [Database for MySQL over TLS](https://learn.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-ssl).
 
 ## Getting Started
 
@@ -79,9 +79,9 @@ The template deployment can be further configured using the following parameters
 * **vnet** - Deploy the solution with VNet. Defaults to True
 * **redisSkuName** - Azure Cache for Redis SKU Name. More info at [Azure Cache for Redis Pricing][redis-pricing]
 * **redisSkuSize** - Azure Cache for Redis SKU Size. More info at [Azure Cache for Redis Pricing][redis-pricing]
-* **administratorLogin** - Admin Login of Azure Database for MariaDB
-* **administratorLoginPassword** - Admin Password of Azure Database for MariaDB
-* **databaseVCores** -Azure Database for MariaDB VCores. More info at [Azure Database for MariaDB Pricing][mariadb-pricing]
+* **administratorLogin** - Admin Login of Azure Database for MySQL
+* **administratorLoginPassword** - Admin Password of Azure Database for MySQL
+* **mysqlType** - Azure Database for MySQL Workload Type. Can be either Development, SmallMedium or BusinessCritical. This affects the underlying virtual machine size as well as the storage capacity. More info at [Azure Database for MySQL Pricing][mysql-pricing]
 * **appServicePlanSkuName** - Azure App Service Plan SKU Name. More info at [Azure App Service Pricing][app-service-pricing]
 * **webAppName** - Azure App Service Name. Controls the DNS name of the CTF site.
 
@@ -92,7 +92,7 @@ Follow the [Contribution Guide](./CONTRIBUTING.md)
 ## Resources
 
 * [App Services - Web App for container][app-service]
-* [Azure Database for MariaDB][mariadb]
+* [Azure Database for MySQL][mysql]
 * [Azure Cache for Redis][redis]
 * [Azure Key Vault][keyvault]
 * [Azure Log Analytics][log-analytics]
@@ -103,7 +103,7 @@ Follow the [Contribution Guide](./CONTRIBUTING.md)
 [ctfd]: https://github.com/CTFd/CTFd
 [bicep]: https://learn.microsoft.com/azure/azure-resource-manager/bicep/overview?tabs=bicep
 [app-service]: https://azure.microsoft.com/products/app-service/containers/
-[mariadb]: https://azure.microsoft.com/services/mariadb/
+[mysql]: https://azure.microsoft.com/services/mysql/
 [redis]: https://www.microsoft.com/azure/redis-cache/cache-overview
 [keyvault]: https://azure.microsoft.com/services/key-vault
 [log-analytics]: https://learn.microsoft.com/azure/azure-monitor/log-query/log-analytics-overview
@@ -113,5 +113,5 @@ Follow the [Contribution Guide](./CONTRIBUTING.md)
 [azure-networking]: https://learn.microsoft.com/azure/virtual-network/virtual-networks-overview
 [container-registry]: https://learn.microsoft.com/azure/container-registry/
 [redis-pricing]: https://azure.microsoft.com/pricing/details/cache/
-[mariadb-pricing]: https://learn.microsoft.com/azure/mariadb/concepts-pricing-tiers
+[mysql-pricing]: https://learn.microsoft.com/en-gb/azure/mysql/single-server/concepts-pricing-tiers
 [app-service-pricing]: https://azure.microsoft.com/pricing/details/app-service/linux/
