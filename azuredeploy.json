@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.27.1.19265",
-      "templateHash": "12723020540904058874"
+      "templateHash": "65255479465051862"
     }
   },
   "parameters": {
@@ -1608,7 +1608,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.27.1.19265",
-              "templateHash": "5998988668191103479"
+              "templateHash": "3201528447701570796"
             }
           },
           "parameters": {
@@ -1954,7 +1954,7 @@
                     "value": "[parameters('ctfDbSecretName')]"
                   },
                   "secretValue": {
-                    "value": "[format('mysql+pymysql://{0}@{1}:{2}@{3}.mysql.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootCA.crt.pem', parameters('administratorLogin'), variables('mysqlServerName'), parameters('administratorLoginPassword'), variables('mysqlServerName'))]"
+                    "value": "[format('mysql+pymysql://{0}:{1}@{2}.mysql.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootCA.crt.pem', parameters('administratorLogin'), parameters('administratorLoginPassword'), variables('mysqlServerName'))]"
                   }
                 },
                 "template": {
