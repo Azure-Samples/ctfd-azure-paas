@@ -62,6 +62,8 @@ param webAppName string = 'ctfd-app-${uniqueString(resourceGroup().id)}'
 @description('SKU for Azure Container Registry')
 var containerRegistrySku = 'Basic'
 
+@description('SKU for Azure Storage Account')
+var storageSkuName = 'Standard_LRS'
 
 @description('Name of Azure Key Vault')
 var keyVaultName = 'ctfd-kv-${uniqueString(resourceGroup().id)}'
@@ -121,6 +123,18 @@ module vnetModule 'modules/vnet.bicep' = if (vnet) {
   }
 }
 
+module fileStorage 'modules/filestorage.bicep' = {
+  name: 'ctfdFileStorage'
+  params: {
+    internalResourcesSubnetName: internalResourcesSubnetName
+    location: resourcesLocation
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    storageSkuName: storageSkuName
+    virtualNetworkName: virtualNetworkName
+    vnet: vnet
+  }
+}
+
 @description('Deploys Azure App Service for containers')
 module ctfWebAppModule 'modules/webapp.bicep' = {
   name: 'ctfDeploy'
@@ -138,6 +152,7 @@ module ctfWebAppModule 'modules/webapp.bicep' = {
     registryName: acrModule.outputs.registryName
     managedIdentityClientId: managedIdentity.properties.clientId
     managedIdentityId: managedIdentity.id
+    storageAccountName: fileStorage.outputs.storageAccountName
     vnet: vnet
   }
 }
