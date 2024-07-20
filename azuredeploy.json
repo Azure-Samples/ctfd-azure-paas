@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.27.1.19265",
-      "templateHash": "13219936566428305885"
+      "version": "0.29.45.22436",
+      "templateHash": "13432226461226020745"
     }
   },
   "parameters": {
@@ -107,6 +107,7 @@
   },
   "variables": {
     "containerRegistrySku": "Basic",
+    "storageSkuName": "Standard_LRS",
     "keyVaultName": "[format('ctfd-kv-{0}', uniqueString(resourceGroup().id))]",
     "ctfCacheSecretName": "ctfd-cache-url",
     "ctfDatabaseSecretName": "ctfd-db-url",
@@ -142,8 +143,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "5458687641602133277"
+              "version": "0.29.45.22436",
+              "templateHash": "13387325328288276100"
             }
           },
           "parameters": {
@@ -226,8 +227,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "8768583701407300451"
+              "version": "0.29.45.22436",
+              "templateHash": "18413692515482586880"
             }
           },
           "parameters": {
@@ -425,8 +426,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "12084021275693225961"
+              "version": "0.29.45.22436",
+              "templateHash": "3540396223098086322"
             }
           },
           "parameters": {
@@ -541,6 +542,321 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
+      "name": "ctfdFileStorage",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "internalResourcesSubnetName": {
+            "value": "[variables('internalResourcesSubnetName')]"
+          },
+          "location": {
+            "value": "[parameters('resourcesLocation')]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
+          },
+          "storageSkuName": {
+            "value": "[variables('storageSkuName')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "vnet": {
+            "value": "[parameters('vnet')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.29.45.22436",
+              "templateHash": "12754505983159937287"
+            }
+          },
+          "parameters": {
+            "vnet": {
+              "type": "bool",
+              "metadata": {
+                "description": "Deploy in VNet"
+              }
+            },
+            "storageSkuName": {
+              "type": "string",
+              "metadata": {
+                "description": "SKU Name for the Azure Storage Account"
+              }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the VNet"
+              }
+            },
+            "internalResourcesSubnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the internal resources subnet"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Log Anaytics Workspace Id"
+              }
+            }
+          },
+          "variables": {
+            "storageAccountName": "[format('ctfd{0}', uniqueString(resourceGroup().id))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-05-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[resourceGroup().location]",
+              "sku": {
+                "name": "[parameters('storageSkuName')]"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "accessTier": "Hot"
+              }
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/fileServices",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', variables('storageAccountName'), 'default')]",
+              "properties": {},
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', 'uploads')]",
+              "properties": {},
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/fileServices/{1}', variables('storageAccountName'), 'default')]",
+              "name": "[format('{0}-diagnostics', variables('storageAccountName'))]",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "category": "StorageRead",
+                    "enabled": true
+                  },
+                  {
+                    "category": "StorageWrite",
+                    "enabled": true
+                  },
+                  {
+                    "category": "StorageDelete",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "Transaction",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]"
+              ]
+            },
+            {
+              "condition": "[parameters('vnet')]",
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2022-09-01",
+              "name": "storagePrivateEndpointDeploy",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "virtualNetworkName": {
+                    "value": "[parameters('virtualNetworkName')]"
+                  },
+                  "subnetName": {
+                    "value": "[parameters('internalResourcesSubnetName')]"
+                  },
+                  "resuorceId": {
+                    "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                  },
+                  "resuorceGroupId": {
+                    "value": "file"
+                  },
+                  "privateDnsZoneName": {
+                    "value": "[format('privatelink.file.{0}', environment().suffixes.storage)]"
+                  },
+                  "privateEndpointName": {
+                    "value": "storage_private_endpoint"
+                  },
+                  "location": {
+                    "value": "[parameters('location')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.29.45.22436",
+                      "templateHash": "2708781261591965498"
+                    }
+                  },
+                  "parameters": {
+                    "virtualNetworkName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the VNet"
+                      }
+                    },
+                    "subnetName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of the subnet"
+                      }
+                    },
+                    "resuorceId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Id of the resource"
+                      }
+                    },
+                    "resuorceGroupId": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Group Id of the resource"
+                      }
+                    },
+                    "privateDnsZoneName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of dns zone"
+                      }
+                    },
+                    "privateEndpointName": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Name of private endpoint"
+                      }
+                    },
+                    "location": {
+                      "type": "string",
+                      "metadata": {
+                        "description": "Location for all resources."
+                      }
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Network/privateEndpoints",
+                      "apiVersion": "2021-05-01",
+                      "name": "[parameters('privateEndpointName')]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "subnet": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                        },
+                        "privateLinkServiceConnections": [
+                          {
+                            "name": "[parameters('privateEndpointName')]",
+                            "properties": {
+                              "privateLinkServiceId": "[parameters('resuorceId')]",
+                              "groupIds": [
+                                "[parameters('resuorceGroupId')]"
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones",
+                      "apiVersion": "2020-06-01",
+                      "name": "[parameters('privateDnsZoneName')]",
+                      "location": "global",
+                      "properties": {}
+                    },
+                    {
+                      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+                      "apiVersion": "2020-06-01",
+                      "name": "[format('{0}/{1}', parameters('privateDnsZoneName'), format('{0}-link', parameters('privateDnsZoneName')))]",
+                      "location": "global",
+                      "properties": {
+                        "registrationEnabled": false,
+                        "virtualNetwork": {
+                          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+                        }
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+                      ]
+                    },
+                    {
+                      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+                      "apiVersion": "2021-05-01",
+                      "name": "[format('{0}/{1}', parameters('privateEndpointName'), 'default')]",
+                      "properties": {
+                        "privateDnsZoneConfigs": [
+                          {
+                            "name": "config1",
+                            "properties": {
+                              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+                            }
+                          }
+                        ]
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]",
+                        "[resourceId('Microsoft.Network/privateEndpoints', parameters('privateEndpointName'))]"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "storageAccountName": {
+              "type": "string",
+              "value": "[variables('storageAccountName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
       "name": "ctfDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -587,6 +903,9 @@
           "managedIdentityId": {
             "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
           },
+          "storageAccountName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfdFileStorage'), '2022-09-01').outputs.storageAccountName.value]"
+          },
           "vnet": {
             "value": "[parameters('vnet')]"
           }
@@ -597,8 +916,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "12758198425395547597"
+              "version": "0.29.45.22436",
+              "templateHash": "10662155076261723920"
             }
           },
           "parameters": {
@@ -685,6 +1004,26 @@
               "metadata": {
                 "description": "CTF managed identity ID"
               }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Storage Account Name"
+              }
+            },
+            "shareName": {
+              "type": "string",
+              "defaultValue": "uploads",
+              "metadata": {
+                "description": "Storage Account File Share Name"
+              }
+            },
+            "storageMountPath": {
+              "type": "string",
+              "defaultValue": "/opt/CTFd/CTFd/uploads",
+              "metadata": {
+                "description": "Storage Account File Share Name"
+              }
             }
           },
           "variables": {
@@ -745,7 +1084,16 @@
                       "value": "[format('{0}.azurecr.io', parameters('registryName'))]"
                     }
                   ],
-                  "linuxFxVersion": "[format('DOCKER|{0}', parameters('acrImageName'))]"
+                  "linuxFxVersion": "[format('DOCKER|{0}', parameters('acrImageName'))]",
+                  "azureStorageAccounts": {
+                    "[format('{0}', parameters('shareName'))]": {
+                      "type": "AzureFiles",
+                      "shareName": "[parameters('shareName')]",
+                      "mountPath": "[parameters('storageMountPath')]",
+                      "accountName": "[parameters('storageAccountName')]",
+                      "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-05-01').keys[0].value]"
+                    }
+                  }
                 },
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
               },
@@ -851,6 +1199,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'acrDeploy')]",
+        "[resourceId('Microsoft.Resources/deployments', 'ctfdFileStorage')]",
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]",
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
       ],
@@ -899,8 +1248,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "9948841544273206804"
+              "version": "0.29.45.22436",
+              "templateHash": "2598610337270264066"
             }
           },
           "parameters": {
@@ -1070,8 +1419,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "2126031309601035790"
+                      "version": "0.29.45.22436",
+                      "templateHash": "2708781261591965498"
                     }
                   },
                   "parameters": {
@@ -1251,8 +1600,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "8910034163638769424"
+              "version": "0.29.45.22436",
+              "templateHash": "598288226465792327"
             }
           },
           "parameters": {
@@ -1401,8 +1750,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "2126031309601035790"
+                      "version": "0.29.45.22436",
+                      "templateHash": "2708781261591965498"
                     }
                   },
                   "parameters": {
@@ -1546,8 +1895,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "7790741183374077619"
+                      "version": "0.29.45.22436",
+                      "templateHash": "15871498574789874450"
                     }
                   },
                   "parameters": {
@@ -1647,8 +1996,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.27.1.19265",
-              "templateHash": "2494312124174264876"
+              "version": "0.29.45.22436",
+              "templateHash": "3567020679935597753"
             }
           },
           "parameters": {
@@ -1876,8 +2225,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.27.1.19265",
-                      "templateHash": "7790741183374077619"
+                      "version": "0.29.45.22436",
+                      "templateHash": "15871498574789874450"
                     }
                   },
                   "parameters": {
