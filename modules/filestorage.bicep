@@ -17,7 +17,7 @@ param location string
 param logAnalyticsWorkspaceId string
 
 @description('Account Name for the Azure Storage Account')
-var storageAccountName = 'ctfd${uniqueString(resourceGroup().id)}'
+param storageAccountName string
 
 module privateEndpointModule 'privateendpoint.bicep' = if (vnet) {
   name: 'storagePrivateEndpointDeploy'
@@ -34,12 +34,13 @@ module privateEndpointModule 'privateendpoint.bicep' = if (vnet) {
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: storageSkuName
   }
   kind: 'StorageV2'
   properties: {
+    publicNetworkAccess: (vnet ? 'Disabled' : 'Enabled')
     accessTier: 'Hot'
   }
 }
@@ -50,13 +51,13 @@ resource fileServices 'Microsoft.Storage/storageAccounts/fileServices@2023-05-01
   properties: {}
 }
 
-resource rStorageAccountContainer 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01' = {
+resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01' = {
   parent: fileServices
   name: 'uploads'
   properties: {}
 }
 
-resource setting 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+resource diagnosticsSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: '${storageAccountName}-diagnostics'
   scope: fileServices
   properties: {

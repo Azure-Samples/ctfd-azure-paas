@@ -65,6 +65,9 @@ var containerRegistrySku = 'Basic'
 @description('SKU for Azure Storage Account')
 var storageSkuName = 'Standard_LRS'
 
+@description('Account Name for the Azure Storage Account')
+var storageAccountName = 'ctfd${uniqueString(resourceGroup().id)}'
+
 @description('Name of Azure Key Vault')
 var keyVaultName = 'ctfd-kv-${uniqueString(resourceGroup().id)}'
 
@@ -130,10 +133,23 @@ module fileStorage 'modules/filestorage.bicep' = {
     location: resourcesLocation
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
     storageSkuName: storageSkuName
+    storageAccountName: storageAccountName
     virtualNetworkName: virtualNetworkName
     vnet: vnet
   }
 }
+
+module fileStorageAcl 'modules/filestorageAcl.bicep' = {
+  name: 'ctfdFileStorageAcl'
+  params: {
+    location: resourcesLocation
+    storageSkuName: storageSkuName
+    storageAccountName: storageAccountName
+    vnet: vnet
+    webAppOutboundIpAdresses: ctfWebAppModule.outputs.outboundIpAdresses
+  }
+}
+
 
 @description('Deploys Azure App Service for containers')
 module ctfWebAppModule 'modules/webapp.bicep' = {
