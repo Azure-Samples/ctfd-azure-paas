@@ -211,8 +211,8 @@ module mySqlDbModule 'modules/mysql.bicep' = {
   params: {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
-    vnetId: vnetModule.outputs.virtualNetworkId
-    databaseSubnetId: vnetModule.outputs.databaseResourcesSubnetId
+    vnetId: (vnet) ? vnetModule.outputs.virtualNetworkId : ''
+    databaseSubnetId: (vnet) ? vnetModule.outputs.databaseResourcesSubnetId : ''
     virtualNetworkName: virtualNetworkName
     location: resourcesLocation
     vnet: vnet
