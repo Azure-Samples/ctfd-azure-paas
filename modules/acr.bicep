@@ -19,9 +19,6 @@ var containerRegistryName = 'ctfdacr${uniqueString(resourceGroup().id)}'
 @description('Name and tag of the custom docker image')
 var ctfdImageName = 'ctfd-azure-cert:latest'
 
-@description('Name of the github repository where Dockerfile is located')
-var ctfdAzureRepo = 'https://github.com/Azure-Samples/ctfd-azure-paas.git'
-
 resource acrResource 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
   name: containerRegistryName
   location: location
@@ -103,8 +100,8 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: ctfdImageName
       }
       {
-        name: 'repo'
-        secureValue: ctfdAzureRepo
+        name: 'CONTENT'
+        value: loadTextContent('../Dockerfile')
       }
       {
         name: 'platform'
@@ -115,7 +112,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         secureValue: '30s'
       }
     ]
-    scriptContent: '#!/bin/bash\nset -e\n\necho \\"Waiting on RBAC replication \\"\nsleep $initialDelay\n\naz acr build  \\\n  --registry $acrName \\\n  --image $taggedImageName \\\n  --platform $platform \\\n $repo'
+    scriptContent: loadTextContent('../scripts/acrbuild.sh')
     retentionInterval: 'P1D'
   }
 }
