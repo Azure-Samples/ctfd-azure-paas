@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.29.45.22436",
-      "templateHash": "13432226461226020745"
+      "version": "0.30.23.60470",
+      "templateHash": "11622470411800892130"
     }
   },
   "parameters": {
@@ -108,6 +108,7 @@
   "variables": {
     "containerRegistrySku": "Basic",
     "storageSkuName": "Standard_LRS",
+    "storageAccountName": "[format('ctfd{0}', uniqueString(resourceGroup().id))]",
     "keyVaultName": "[format('ctfd-kv-{0}', uniqueString(resourceGroup().id))]",
     "ctfCacheSecretName": "ctfd-cache-url",
     "ctfDatabaseSecretName": "ctfd-db-url",
@@ -143,8 +144,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "13387325328288276100"
+              "version": "0.30.23.60470",
+              "templateHash": "7182699772408753472"
             }
           },
           "parameters": {
@@ -227,8 +228,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "18413692515482586880"
+              "version": "0.30.23.60470",
+              "templateHash": "8248140670455554766"
             }
           },
           "parameters": {
@@ -426,8 +427,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "3540396223098086322"
+              "version": "0.30.23.60470",
+              "templateHash": "10718260406736539618"
             }
           },
           "parameters": {
@@ -561,6 +562,9 @@
           "storageSkuName": {
             "value": "[variables('storageSkuName')]"
           },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
           "virtualNetworkName": {
             "value": "[variables('virtualNetworkName')]"
           },
@@ -574,8 +578,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "12754505983159937287"
+              "version": "0.30.23.60470",
+              "templateHash": "17046964739998725117"
             }
           },
           "parameters": {
@@ -614,48 +618,52 @@
               "metadata": {
                 "description": "Log Anaytics Workspace Id"
               }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Account Name for the Azure Storage Account"
+              }
             }
-          },
-          "variables": {
-            "storageAccountName": "[format('ctfd{0}', uniqueString(resourceGroup().id))]"
           },
           "resources": [
             {
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2023-05-01",
-              "name": "[variables('storageAccountName')]",
-              "location": "[resourceGroup().location]",
+              "name": "[parameters('storageAccountName')]",
+              "location": "[parameters('location')]",
               "sku": {
                 "name": "[parameters('storageSkuName')]"
               },
               "kind": "StorageV2",
               "properties": {
+                "publicNetworkAccess": "[if(parameters('vnet'), 'Disabled', 'Enabled')]",
                 "accessTier": "Hot"
               }
             },
             {
               "type": "Microsoft.Storage/storageAccounts/fileServices",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}', variables('storageAccountName'), 'default')]",
+              "name": "[format('{0}/{1}', parameters('storageAccountName'), 'default')]",
               "properties": {},
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
               ]
             },
             {
               "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
               "apiVersion": "2023-05-01",
-              "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', 'uploads')]",
+              "name": "[format('{0}/{1}/{2}', parameters('storageAccountName'), 'default', 'uploads')]",
               "properties": {},
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]"
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccountName'), 'default')]"
               ]
             },
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/fileServices/{1}', variables('storageAccountName'), 'default')]",
-              "name": "[format('{0}-diagnostics', variables('storageAccountName'))]",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/fileServices/{1}', parameters('storageAccountName'), 'default')]",
+              "name": "[format('{0}-diagnostics', parameters('storageAccountName'))]",
               "properties": {
                 "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
                 "logs": [
@@ -680,7 +688,7 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]"
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccountName'), 'default')]"
               ]
             },
             {
@@ -701,7 +709,7 @@
                     "value": "[parameters('internalResourcesSubnetName')]"
                   },
                   "resuorceId": {
-                    "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                    "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
                   },
                   "resuorceGroupId": {
                     "value": "file"
@@ -722,8 +730,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.29.45.22436",
-                      "templateHash": "2708781261591965498"
+                      "version": "0.30.23.60470",
+                      "templateHash": "7894544839504953380"
                     }
                   },
                   "parameters": {
@@ -838,20 +846,112 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
               ]
             }
           ],
           "outputs": {
             "storageAccountName": {
               "type": "string",
-              "value": "[variables('storageAccountName')]"
+              "value": "[parameters('storageAccountName')]"
             }
           }
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "ctfdFileStorageAcl",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('resourcesLocation')]"
+          },
+          "storageSkuName": {
+            "value": "[variables('storageSkuName')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "vnet": {
+            "value": "[parameters('vnet')]"
+          },
+          "webAppOutboundIpAdresses": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfDeploy'), '2022-09-01').outputs.outboundIpAdresses.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "9147010146567357457"
+            }
+          },
+          "parameters": {
+            "vnet": {
+              "type": "bool",
+              "metadata": {
+                "description": "Deploy in VNet"
+              }
+            },
+            "storageSkuName": {
+              "type": "string",
+              "metadata": {
+                "description": "SKU Name for the Azure Storage Account"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "webAppOutboundIpAdresses": {
+              "type": "string",
+              "metadata": {
+                "description": "Outbound IP adresses of CTF Web App. Required for the non-vnet scenario"
+              }
+            },
+            "storageAccountName": {
+              "type": "string",
+              "metadata": {
+                "description": "Account Name for the Azure Storage Account"
+              }
+            }
+          },
+          "variables": {
+            "networkAcls": "[if(parameters('vnet'), createObject('defaultAction', 'Deny', 'bypass', 'AzureServices'), createObject('defaultAction', 'Allow', 'ipRules', map(split(parameters('webAppOutboundIpAdresses'), ','), lambda('ip', createObject('value', lambdaVariables('ip'))))))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('storageSkuName')]"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "networkAcls": "[variables('networkAcls')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'ctfDeploy')]"
       ]
     },
     {
@@ -916,8 +1016,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "10662155076261723920"
+              "version": "0.30.23.60470",
+              "templateHash": "5518069655956403911"
             }
           },
           "parameters": {
@@ -1248,8 +1348,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "2598610337270264066"
+              "version": "0.30.23.60470",
+              "templateHash": "3794185289133072214"
             }
           },
           "parameters": {
@@ -1419,8 +1519,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.29.45.22436",
-                      "templateHash": "2708781261591965498"
+                      "version": "0.30.23.60470",
+                      "templateHash": "7894544839504953380"
                     }
                   },
                   "parameters": {
@@ -1600,8 +1700,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "598288226465792327"
+              "version": "0.30.23.60470",
+              "templateHash": "16708737575250428932"
             }
           },
           "parameters": {
@@ -1750,8 +1850,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.29.45.22436",
-                      "templateHash": "2708781261591965498"
+                      "version": "0.30.23.60470",
+                      "templateHash": "7894544839504953380"
                     }
                   },
                   "parameters": {
@@ -1895,8 +1995,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.29.45.22436",
-                      "templateHash": "15871498574789874450"
+                      "version": "0.30.23.60470",
+                      "templateHash": "9372812323905974236"
                     }
                   },
                   "parameters": {
@@ -1962,12 +2062,8 @@
           "administratorLoginPassword": {
             "value": "[parameters('administratorLoginPassword')]"
           },
-          "vnetId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2022-09-01').outputs.virtualNetworkId.value]"
-          },
-          "databaseSubnetId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2022-09-01').outputs.databaseResourcesSubnetId.value]"
-          },
+          "vnetId": "[if(parameters('vnet'), createObject('value', reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2022-09-01').outputs.virtualNetworkId.value), createObject('value', ''))]",
+          "databaseSubnetId": "[if(parameters('vnet'), createObject('value', reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2022-09-01').outputs.databaseResourcesSubnetId.value), createObject('value', ''))]",
           "virtualNetworkName": {
             "value": "[variables('virtualNetworkName')]"
           },
@@ -1996,8 +2092,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.29.45.22436",
-              "templateHash": "3567020679935597753"
+              "version": "0.30.23.60470",
+              "templateHash": "579894065797634510"
             }
           },
           "parameters": {
@@ -2225,8 +2321,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.29.45.22436",
-                      "templateHash": "15871498574789874450"
+                      "version": "0.30.23.60470",
+                      "templateHash": "9372812323905974236"
                     }
                   },
                   "parameters": {
