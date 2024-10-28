@@ -40,8 +40,22 @@ param managedIdentityClientId string
 @description('CTF managed identity ID')
 param managedIdentityId string
 
+@description('Storage Account Name')
+param storageAccountName string
+
+@description('Storage Account File Share Name')
+param shareName string = 'uploads'
+
+@description('Storage Account File Share Name')
+param storageMountPath string = '/opt/CTFd/CTFd/uploads'
+
 @description('Server Name for Azure app service')
 var appServicePlanName = 'ctfd-server-${uniqueString(resourceGroup().id)}'
+
+// Get a reference to the existing storage
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
+  name: storageAccountName
+}
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: appServicePlanName
@@ -95,6 +109,15 @@ resource webApp 'Microsoft.Web/sites@2022-09-01' = {
         }
       ]
       linuxFxVersion: 'DOCKER|${acrImageName}'
+      azureStorageAccounts: {
+        '${shareName}': {
+          type: 'AzureFiles'
+          shareName: shareName
+          mountPath: storageMountPath
+          accountName: storageAccountName
+          accessKey: storageAccount.listKeys().keys[0].value
+        }
+      }
     }
     serverFarmId: appServicePlan.id
   }
