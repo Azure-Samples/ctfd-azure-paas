@@ -116,12 +116,12 @@ resource ctdFirewallRule 'Microsoft.DBforMySQL/flexibleServers/firewallRules@202
   }
 }
 
-resource dnszone 'Microsoft.Network/privateDnsZones@2020-06-01' = if (vnet) {
+resource dnszone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (vnet) {
   name: '${mysqlServerName}.private.mysql.database.azure.com'
   location: 'global'
 }
 
-resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if (vnet) {
+resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (vnet) {
   name: virtualNetworkName
   parent: dnszone
   location: 'global'

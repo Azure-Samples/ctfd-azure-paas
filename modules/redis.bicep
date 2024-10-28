@@ -30,7 +30,7 @@ var redisServerName = 'ctfd-redis-${uniqueString(resourceGroup().id)}'
 
 var family = redisSkuName == 'Basic' || redisSkuName == 'Standard' ? 'C' : 'P'
 
-resource redisCache 'Microsoft.Cache/redis@2022-06-01' = {
+resource redisCache 'Microsoft.Cache/redis@2023-08-01' = {
   name: redisServerName
   location: location
   properties: {
