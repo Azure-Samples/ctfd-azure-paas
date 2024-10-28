@@ -35,7 +35,7 @@ var tenantId = subscription().tenantId
 // map the comma-separated string into a json
 var networkAcls = vnet ? { defaultAction: 'Deny', bypass: 'AzureServices' } : { defaultAction: 'Allow', ipRules: map(split(webAppOutboundIpAdresses, ','), ip => { value: ip }) }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
   location: location
   properties: {

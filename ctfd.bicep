@@ -89,7 +89,7 @@ var publicResourcesSubnetName = 'public_resources_subnet'
 @description('Name of the database resources subnet')
 var databaseResourcesSubnetName = 'database_resources_subnet'
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'ctf-mi-${uniqueString(resourceGroup().id)}'
   location: resourcesLocation
 }

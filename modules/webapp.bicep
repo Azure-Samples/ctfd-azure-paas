@@ -57,7 +57,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing 
   name: storageAccountName
 }
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2020-12-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   name: appServicePlanName
   location: location
   kind: 'linux'
@@ -69,7 +69,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2020-12-01' = {
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2022-03-01' = {
+resource webApp 'Microsoft.Web/sites@2022-09-01' = {
   name: webAppName
   location: location
   tags: {}
@@ -123,7 +123,7 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
-resource appServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+resource appServiceAppSettings 'Microsoft.Web/sites/config@2022-09-01' = {
   parent: webApp
   name: 'logs'
   properties: {

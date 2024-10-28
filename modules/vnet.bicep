@@ -25,7 +25,7 @@ var internalResourcesSubnetCIDR = '10.200.2.0/28'
 @description('CIDR of the databse resources subnet')
 var databaseResourcesSubnetCIDR = '10.200.3.0/28'
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-06-01' = {
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-03-01' = {
   name: virtualNetworkName
   location: location
   properties: {

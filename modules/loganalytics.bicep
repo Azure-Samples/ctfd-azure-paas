@@ -10,7 +10,7 @@ var logAnalyticsName = 'ctfd-log-analytics-${uniqueString(resourceGroup().id)}'
 @description('Log Retention in days')
 var retentionInDays = 30
 
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
   location: location
   tags: {
