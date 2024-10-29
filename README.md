@@ -1,7 +1,7 @@
 # CTFd on Azure PaaS
 
 This project sets up a self-hosted, secured [CTFd][ctfd] environment, using Azure PaaS, that is easy to maintain.
-It supports the *Capture-the-Flag with CTFd on Azure PaaS* content on the [Azure Architecture Center](link.com TODO:).
+It supports the *Capture-the-Flag with CTFd on Azure PaaS* content on the [Azure Architecture Center][azure-arch-ctfd-paas].
 
 ## Features
 
@@ -12,6 +12,7 @@ This project provides the following features:
 * Infrastructure as Code with [Azure Bicep][bicep].
 * High scale that meets different team sizes with [Azure App Service Web App for Containers][app-service].
 * Backend database and cache provided with Azure PaaS [Database for MySQL][mysql] and [Cache for Redis][redis].
+* Persistent file storage provided with [Azure Files][azure-files] using a [mounted SMB share][app-service-connect-storage]
 * Secrets management using [Azure Key Vault][keyvault].
 * Log Management with [Azure Log Analytics][log-analytics].
 * Adjustable level of network isolation: The solution can be provisioned either with or without virtual network. Private networking is provided using [Private Endpoints][private-endpoint] and [App Service VNet Integration][vnet-integration].
@@ -52,14 +53,14 @@ az deployment group create --resource-group $RESOURCE_GROUP_NAME --template-file
 
 ### Adjustable Network Isolation
 
-By default the solution isolates network traffic from the CTFd App Service to the internal services (database, cache and key mangement) using a virtual network.
+By default the solution isolates network traffic from the CTFd App Service to the internal services (database, cache and key management) using a virtual network.
 You may reduce the solution complexity and potentially optimize cost by provisioning it without network isolation using the following command:
 
 ```bash
 az deployment group create --resource-group $RESOURCE_GROUP_NAME --template-file ctfd.bicep --parameters administratorLoginPassword=$DB_PASSWORD --parameters vnet=False
 ```
 
-When provisioing the solution without a virtual network, the archicture diagram should look like this:
+When provisioning the solution without a virtual network, the architecture diagram should look like this:
 
 ![CTFd architecture without vnet](/assets/architecture-without-vnet.png)
 
@@ -71,7 +72,7 @@ Delete the resource group using the following command
 az group delete -n $RESOURCE_GROUP_NAME
 ```
 
-### Additinal Configuratin Options
+### Additional Configuration Options
 
 The template deployment can be further configured using the following parameters:
 
@@ -98,6 +99,7 @@ Follow the [Contribution Guide](./CONTRIBUTING.md)
 * [Azure Log Analytics][log-analytics]
 * [Azure Networking][azure-networking]
 * [Azure Container Registry][container-registry]
+* [Azure Files][azure-files]
 
 <!-- Links -->
 [ctfd]: https://github.com/CTFd/CTFd
@@ -115,3 +117,6 @@ Follow the [Contribution Guide](./CONTRIBUTING.md)
 [redis-pricing]: https://azure.microsoft.com/pricing/details/cache/
 [mysql-pricing]: https://learn.microsoft.com/en-gb/azure/mysql/single-server/concepts-pricing-tiers
 [app-service-pricing]: https://azure.microsoft.com/pricing/details/app-service/linux/
+[azure-files]: https://learn.microsoft.com/en-us/azure/storage/files/storage-files-introduction
+[app-service-connect-storage]: https://learn.microsoft.com/en-us/azure/app-service/configure-connect-to-azure-storage
+[azure-arch-ctfd-paas]: https://learn.microsoft.com/en-us/azure/architecture/example-scenario/apps/capture-the-flag-platform-on-azure-paas

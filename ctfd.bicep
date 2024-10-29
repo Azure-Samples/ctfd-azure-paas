@@ -62,6 +62,11 @@ param webAppName string = 'ctfd-app-${uniqueString(resourceGroup().id)}'
 @description('SKU for Azure Container Registry')
 var containerRegistrySku = 'Basic'
 
+@description('SKU for Azure Storage Account')
+var storageSkuName = 'Standard_LRS'
+
+@description('Account Name for the Azure Storage Account')
+var storageAccountName = 'ctfd${uniqueString(resourceGroup().id)}'
 
 @description('Name of Azure Key Vault')
 var keyVaultName = 'ctfd-kv-${uniqueString(resourceGroup().id)}'
@@ -84,7 +89,7 @@ var publicResourcesSubnetName = 'public_resources_subnet'
 @description('Name of the database resources subnet')
 var databaseResourcesSubnetName = 'database_resources_subnet'
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'ctf-mi-${uniqueString(resourceGroup().id)}'
   location: resourcesLocation
 }
@@ -121,6 +126,31 @@ module vnetModule 'modules/vnet.bicep' = if (vnet) {
   }
 }
 
+module fileStorage 'modules/filestorage.bicep' = {
+  name: 'ctfdFileStorage'
+  params: {
+    internalResourcesSubnetName: internalResourcesSubnetName
+    location: resourcesLocation
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    storageSkuName: storageSkuName
+    storageAccountName: storageAccountName
+    virtualNetworkName: virtualNetworkName
+    vnet: vnet
+  }
+}
+
+module fileStorageAcl 'modules/filestorageAcl.bicep' = {
+  name: 'ctfdFileStorageAcl'
+  params: {
+    location: resourcesLocation
+    storageSkuName: storageSkuName
+    storageAccountName: storageAccountName
+    vnet: vnet
+    webAppOutboundIpAdresses: ctfWebAppModule.outputs.outboundIpAdresses
+  }
+}
+
+
 @description('Deploys Azure App Service for containers')
 module ctfWebAppModule 'modules/webapp.bicep' = {
   name: 'ctfDeploy'
@@ -138,6 +168,7 @@ module ctfWebAppModule 'modules/webapp.bicep' = {
     registryName: acrModule.outputs.registryName
     managedIdentityClientId: managedIdentity.properties.clientId
     managedIdentityId: managedIdentity.id
+    storageAccountName: fileStorage.outputs.storageAccountName
     vnet: vnet
   }
 }
@@ -180,8 +211,8 @@ module mySqlDbModule 'modules/mysql.bicep' = {
   params: {
     administratorLogin: administratorLogin
     administratorLoginPassword: administratorLoginPassword
-    vnetId: vnetModule.outputs.virtualNetworkId
-    databaseSubnetId: vnetModule.outputs.databaseResourcesSubnetId
+    vnetId: (vnet) ? vnetModule.outputs.virtualNetworkId : ''
+    databaseSubnetId: (vnet) ? vnetModule.outputs.databaseResourcesSubnetId : ''
     virtualNetworkName: virtualNetworkName
     location: resourcesLocation
     vnet: vnet

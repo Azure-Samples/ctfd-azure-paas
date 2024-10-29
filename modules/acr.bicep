@@ -19,7 +19,7 @@ var containerRegistryName = 'ctfdacr${uniqueString(resourceGroup().id)}'
 @description('Name and tag of the custom docker image')
 var ctfdImageName = 'ctfd-azure-cert:latest'
 
-resource acrResource 'Microsoft.ContainerRegistry/registries@2021-06-01-preview' = {
+resource acrResource 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' = {
   name: containerRegistryName
   location: location
   sku: {
@@ -73,7 +73,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   }
 }
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'buildAndPush'
   location: location
   kind: 'AzureCLI'
