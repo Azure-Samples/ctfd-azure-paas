@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.30.23.60470",
-      "templateHash": "16352825914736823232"
+      "templateHash": "15371799224721930237"
     }
   },
   "parameters": {
@@ -229,7 +229,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.30.23.60470",
-              "templateHash": "4149562968203778784"
+              "templateHash": "11953261869424114237"
             }
           },
           "parameters": {
@@ -265,9 +265,10 @@
             }
           },
           "variables": {
+            "$fxv#0": "# This Dockerfile builds a CTFd (https://github.com/CTFd/CTFd) image that\n# enables TLS connectivity to Azure Database for MySQL.\n# More info: https://learn.microsoft.com/en-gb/azure/postgresql/flexible-server/concepts-networking-ssl-tls#downloading-root-ca-certificates-and-updating-application-clients-in-certificate-pinning-scenarios\nFROM ctfd/ctfd:3.7.0\n\nUSER root\nRUN apt-get update && apt-get install -y wget --no-install-recommends \\\n    && apt-get clean \\\n    && rm -rf /var/lib/apt/lists/*\n\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootCA.crt -P /opt/certificates/\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootCA.crt -out /opt/certificates/DigiCertGlobalRootCA.crt.pem -outform PEM\n\nUSER 1001\nEXPOSE 8000\n\nENTRYPOINT [\"/opt/CTFd/docker-entrypoint.sh\"]\n",
+            "$fxv#1": "#!/bin/bash\nset -e\n\necho \"Waiting on RBAC replication\"\nsleep $initialDelay\n\necho \"$CONTENT\" > Dockerfile\n\naz acr build \\\n    --registry $acrName \\\n    --image $taggedImageName \\\n    --platform $platform \\\n    .\n",
             "containerRegistryName": "[format('ctfdacr{0}', uniqueString(resourceGroup().id))]",
-            "ctfdImageName": "ctfd-azure-cert:latest",
-            "ctfdAzureRepo": "https://github.com/Azure-Samples/ctfd-azure-paas.git"
+            "ctfdImageName": "ctfd-azure-cert:latest"
           },
           "resources": [
             {
@@ -357,8 +358,8 @@
                     "value": "[variables('ctfdImageName')]"
                   },
                   {
-                    "name": "repo",
-                    "secureValue": "[variables('ctfdAzureRepo')]"
+                    "name": "CONTENT",
+                    "value": "[variables('$fxv#0')]"
                   },
                   {
                     "name": "platform",
@@ -369,7 +370,7 @@
                     "secureValue": "30s"
                   }
                 ],
-                "scriptContent": "#!/bin/bash\nset -e\n\necho \\\"Waiting on RBAC replication \\\"\nsleep $initialDelay\n\naz acr build  \\\n  --registry $acrName \\\n  --image $taggedImageName \\\n  --platform $platform \\\n $repo",
+                "scriptContent": "[variables('$fxv#1')]",
                 "retentionInterval": "P1D"
               }
             }
