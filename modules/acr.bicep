@@ -19,7 +19,7 @@ var containerRegistryName = 'ctfdacr${uniqueString(resourceGroup().id)}'
 @description('Name and tag of the custom docker image')
 var ctfdImageName = 'ctfd-azure-cert:latest'
 
-resource acrResource 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' = {
+resource acrResource 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
   name: containerRegistryName
   location: location
   sku: {
