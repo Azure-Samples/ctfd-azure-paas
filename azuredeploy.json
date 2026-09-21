@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.38.33.27573",
-      "templateHash": "16695519178084351342"
+      "version": "0.46.1.21595",
+      "templateHash": "16423646690973189719"
     }
   },
   "parameters": {
@@ -144,8 +144,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "66185985101951750"
+              "version": "0.46.1.21595",
+              "templateHash": "8863625783757776709"
             }
           },
           "parameters": {
@@ -228,8 +228,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "12939848764310223107"
+              "version": "0.46.1.21595",
+              "templateHash": "6965975706503424457"
             }
           },
           "parameters": {
@@ -265,8 +265,8 @@
             }
           },
           "variables": {
-            "$fxv#0": "# This Dockerfile builds a CTFd (https://github.com/CTFd/CTFd) image that\r\n# enables TLS connectivity to Azure Database for MySQL.\r\n# More info: https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-root-certificate-rotation\r\nFROM ctfd/ctfd:3.7.0\r\n\r\nUSER root\r\nRUN apt-get update && apt-get install -y wget openssl --no-install-recommends \\\r\n    && apt-get clean \\\r\n    && rm -rf /var/lib/apt/lists/*\r\n\r\n# Create certificates directory\r\nRUN mkdir -p /opt/certificates/\r\n\r\n# Download the certificates\r\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootCA.crt -P /opt/certificates/\r\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootG2.crt -P /opt/certificates/\r\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga \"https://www.microsoft.com/pkiops/certs/Microsoft%20RSA%20Root%20Certificate%20Authority%202017.crt\" -O /opt/certificates/Microsoft-RSA-Root-CA-2017.crt\r\n\r\n# Convert certificates to PEM format\r\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootCA.crt -out /opt/certificates/DigiCertGlobalRootCA.crt.pem -outform PEM\r\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootG2.crt -out /opt/certificates/DigiCertGlobalRootG2.crt.pem -outform PEM\r\nRUN openssl x509 -in /opt/certificates/Microsoft-RSA-Root-CA-2017.crt -out /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem -outform PEM\r\n\r\n# Combine all certificates into a single bundle file\r\nRUN cat /opt/certificates/DigiCertGlobalRootCA.crt.pem \\\r\n        /opt/certificates/DigiCertGlobalRootG2.crt.pem \\\r\n        /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem \\\r\n        > /opt/certificates/azure-mysql-ca-bundle.pem\r\n\r\n# Clean up individual certificate files (optional)\r\nRUN rm /opt/certificates/*.crt /opt/certificates/DigiCertGlobalRootCA.crt.pem \\\r\n       /opt/certificates/DigiCertGlobalRootG2.crt.pem \\\r\n       /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem\r\n\r\nUSER 1001\r\nEXPOSE 8000\r\n\r\nENTRYPOINT [\"/opt/CTFd/docker-entrypoint.sh\"]\r\n",
-            "$fxv#1": "#!/bin/bash\r\nset -e\r\n\r\necho \"Waiting on RBAC replication\"\r\nsleep $initialDelay\r\n\r\necho \"$CONTENT\" > Dockerfile\r\n\r\naz acr build \\\r\n    --registry $acrName \\\r\n    --image $taggedImageName \\\r\n    --platform $platform \\\r\n    .\r\n",
+            "$fxv#0": "# This Dockerfile builds a CTFd (https://github.com/CTFd/CTFd) image that\n# enables TLS connectivity to Azure Database for MySQL.\n# More info: https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-root-certificate-rotation\nFROM ctfd/ctfd:3.7.0\n\nUSER root\nRUN apt-get update && apt-get install -y wget openssl --no-install-recommends \\\n    && apt-get clean \\\n    && rm -rf /var/lib/apt/lists/*\n\n# Create certificates directory\nRUN mkdir -p /opt/certificates/\n\n# Download the certificates\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootCA.crt -P /opt/certificates/\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootG2.crt -P /opt/certificates/\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga \"https://www.microsoft.com/pkiops/certs/Microsoft%20RSA%20Root%20Certificate%20Authority%202017.crt\" -O /opt/certificates/Microsoft-RSA-Root-CA-2017.crt\n\n# Convert certificates to PEM format\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootCA.crt -out /opt/certificates/DigiCertGlobalRootCA.crt.pem -outform PEM\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootG2.crt -out /opt/certificates/DigiCertGlobalRootG2.crt.pem -outform PEM\nRUN openssl x509 -in /opt/certificates/Microsoft-RSA-Root-CA-2017.crt -out /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem -outform PEM\n\n# Combine all certificates into a single bundle file\nRUN cat /opt/certificates/DigiCertGlobalRootCA.crt.pem \\\n        /opt/certificates/DigiCertGlobalRootG2.crt.pem \\\n        /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem \\\n        > /opt/certificates/azure-mysql-ca-bundle.pem\n\n# Clean up individual certificate files (optional)\nRUN rm /opt/certificates/*.crt /opt/certificates/DigiCertGlobalRootCA.crt.pem \\\n       /opt/certificates/DigiCertGlobalRootG2.crt.pem \\\n       /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem\n\nUSER 1001\nEXPOSE 8000\n\nENTRYPOINT [\"/opt/CTFd/docker-entrypoint.sh\"]\n",
+            "$fxv#1": "#!/bin/bash\nset -e\n\necho \"Waiting on RBAC replication\"\nsleep $initialDelay\n\necho \"$CONTENT\" > Dockerfile\n\naz acr build \\\n    --registry $acrName \\\n    --image $taggedImageName \\\n    --platform $platform \\\n    .\n",
             "containerRegistryName": "[format('ctfdacr{0}', uniqueString(resourceGroup().id))]",
             "ctfdImageName": "ctfd-azure-cert:latest"
           },
@@ -286,7 +286,7 @@
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', variables('containerRegistryName'))]",
+              "scope": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]",
               "name": "[format('{0}-diagnostics', variables('containerRegistryName'))]",
               "properties": {
                 "logs": [
@@ -318,7 +318,7 @@
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.ContainerRegistry/registries/{0}', variables('containerRegistryName'))]",
+              "scope": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]",
               "name": "[guid(resourceGroup().id, 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
               "properties": {
                 "principalId": "[parameters('managedIdentityPrincipalId')]",
@@ -428,8 +428,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "11182114117381548661"
+              "version": "0.46.1.21595",
+              "templateHash": "3373041774839292672"
             }
           },
           "parameters": {
@@ -579,8 +579,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "17355121348518826363"
+              "version": "0.46.1.21595",
+              "templateHash": "16664618046200479663"
             }
           },
           "parameters": {
@@ -663,7 +663,7 @@
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}/fileServices/{1}', parameters('storageAccountName'), 'default')]",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccountName'), 'default')]",
               "name": "[format('{0}-diagnostics', parameters('storageAccountName'))]",
               "properties": {
                 "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
@@ -731,8 +731,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.38.33.27573",
-                      "templateHash": "12917425222645686647"
+                      "version": "0.46.1.21595",
+                      "templateHash": "16342694877832224492"
                     }
                   },
                   "parameters": {
@@ -895,8 +895,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "98342198534148912"
+              "version": "0.46.1.21595",
+              "templateHash": "9125519182451707022"
             }
           },
           "parameters": {
@@ -1017,8 +1017,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "8375832615045180862"
+              "version": "0.46.1.21595",
+              "templateHash": "498581364390877945"
             }
           },
           "parameters": {
@@ -1233,7 +1233,7 @@
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.Web/sites/{0}', parameters('webAppName'))]",
+              "scope": "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]",
               "name": "[format('{0}-diagnostics', parameters('webAppName'))]",
               "properties": {
                 "logs": [
@@ -1349,8 +1349,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "936459023733389496"
+              "version": "0.46.1.21595",
+              "templateHash": "11295744075083276000"
             }
           },
           "parameters": {
@@ -1438,7 +1438,7 @@
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2020-04-01-preview",
-              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+              "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
               "name": "[guid('4633458b-17de-408a-b874-0445c86b69e6', parameters('readerPrincipalId'), resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')))]",
               "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
@@ -1452,7 +1452,7 @@
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+              "scope": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
               "name": "[format('{0}-diagnostics', parameters('keyVaultName'))]",
               "properties": {
                 "logs": [
@@ -1520,8 +1520,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.38.33.27573",
-                      "templateHash": "12917425222645686647"
+                      "version": "0.46.1.21595",
+                      "templateHash": "16342694877832224492"
                     }
                   },
                   "parameters": {
@@ -1701,8 +1701,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "977923096016682397"
+              "version": "0.46.1.21595",
+              "templateHash": "9517191776509011588"
             }
           },
           "parameters": {
@@ -1783,7 +1783,7 @@
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.Cache/redis/{0}', variables('redisServerName'))]",
+              "scope": "[resourceId('Microsoft.Cache/redis', variables('redisServerName'))]",
               "name": "[format('{0}-diagnostics', variables('redisServerName'))]",
               "properties": {
                 "logs": [
@@ -1851,8 +1851,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.38.33.27573",
-                      "templateHash": "12917425222645686647"
+                      "version": "0.46.1.21595",
+                      "templateHash": "16342694877832224492"
                     }
                   },
                   "parameters": {
@@ -1996,8 +1996,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.38.33.27573",
-                      "templateHash": "1520195056806986697"
+                      "version": "0.46.1.21595",
+                      "templateHash": "4722938262229854909"
                     }
                   },
                   "parameters": {
@@ -2093,8 +2093,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.38.33.27573",
-              "templateHash": "1589984659799317438"
+              "version": "0.46.1.21595",
+              "templateHash": "17900430886490091016"
             }
           },
           "parameters": {
@@ -2276,7 +2276,7 @@
             {
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.DBforMySQL/flexibleServers/{0}', variables('mysqlServerName'))]",
+              "scope": "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('mysqlServerName'))]",
               "name": "[format('{0}-diagnostics', variables('mysqlServerName'))]",
               "properties": {
                 "logs": [
@@ -2322,8 +2322,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.38.33.27573",
-                      "templateHash": "1520195056806986697"
+                      "version": "0.46.1.21595",
+                      "templateHash": "4722938262229854909"
                     }
                   },
                   "parameters": {
