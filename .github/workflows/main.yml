@@ -13,10 +13,10 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Bicep Build
-        uses: Azure/bicep-build-action@c333f970fb0daae2241062b5b7acf30a97f696c9 # v1.0.0
+        uses: Azure/bicep-build-action@d2a88e5c7150cd562f3e8b8f361560db2cb4d5c5 # v1.0.1
         with:
           bicepFilePath: ctfd.bicep
           outputFilePath: azuredeploy.json
-      - uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5.2.0
+      - uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
