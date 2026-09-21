@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.30.23.60470",
-      "templateHash": "15371799224721930237"
+      "version": "0.38.33.27573",
+      "templateHash": "16695519178084351342"
     }
   },
   "parameters": {
@@ -126,7 +126,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "logAnalyticsDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -144,8 +144,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "13905535415559483716"
+              "version": "0.38.33.27573",
+              "templateHash": "66185985101951750"
             }
           },
           "parameters": {
@@ -198,7 +198,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "acrDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -207,7 +207,7 @@
         "mode": "Incremental",
         "parameters": {
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2025-04-01').outputs.logAnalyticsWorkspaceId.value]"
           },
           "location": {
             "value": "[parameters('resourcesLocation')]"
@@ -228,8 +228,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "11953261869424114237"
+              "version": "0.38.33.27573",
+              "templateHash": "12939848764310223107"
             }
           },
           "parameters": {
@@ -265,8 +265,8 @@
             }
           },
           "variables": {
-            "$fxv#0": "# This Dockerfile builds a CTFd (https://github.com/CTFd/CTFd) image that\n# enables TLS connectivity to Azure Database for MySQL.\n# More info: https://learn.microsoft.com/en-gb/azure/postgresql/flexible-server/concepts-networking-ssl-tls#downloading-root-ca-certificates-and-updating-application-clients-in-certificate-pinning-scenarios\nFROM ctfd/ctfd:3.7.0\n\nUSER root\nRUN apt-get update && apt-get install -y wget --no-install-recommends \\\n    && apt-get clean \\\n    && rm -rf /var/lib/apt/lists/*\n\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootCA.crt -P /opt/certificates/\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootCA.crt -out /opt/certificates/DigiCertGlobalRootCA.crt.pem -outform PEM\n\nUSER 1001\nEXPOSE 8000\n\nENTRYPOINT [\"/opt/CTFd/docker-entrypoint.sh\"]\n",
-            "$fxv#1": "#!/bin/bash\nset -e\n\necho \"Waiting on RBAC replication\"\nsleep $initialDelay\n\necho \"$CONTENT\" > Dockerfile\n\naz acr build \\\n    --registry $acrName \\\n    --image $taggedImageName \\\n    --platform $platform \\\n    .\n",
+            "$fxv#0": "# This Dockerfile builds a CTFd (https://github.com/CTFd/CTFd) image that\r\n# enables TLS connectivity to Azure Database for MySQL.\r\n# More info: https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-root-certificate-rotation\r\nFROM ctfd/ctfd:3.7.0\r\n\r\nUSER root\r\nRUN apt-get update && apt-get install -y wget openssl --no-install-recommends \\\r\n    && apt-get clean \\\r\n    && rm -rf /var/lib/apt/lists/*\r\n\r\n# Create certificates directory\r\nRUN mkdir -p /opt/certificates/\r\n\r\n# Download the certificates\r\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootCA.crt -P /opt/certificates/\r\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga https://cacerts.digicert.com/DigiCertGlobalRootG2.crt -P /opt/certificates/\r\nRUN wget --user-agent=\"Mozilla\" --progress=dot:giga \"https://www.microsoft.com/pkiops/certs/Microsoft%20RSA%20Root%20Certificate%20Authority%202017.crt\" -O /opt/certificates/Microsoft-RSA-Root-CA-2017.crt\r\n\r\n# Convert certificates to PEM format\r\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootCA.crt -out /opt/certificates/DigiCertGlobalRootCA.crt.pem -outform PEM\r\nRUN openssl x509 -in /opt/certificates/DigiCertGlobalRootG2.crt -out /opt/certificates/DigiCertGlobalRootG2.crt.pem -outform PEM\r\nRUN openssl x509 -in /opt/certificates/Microsoft-RSA-Root-CA-2017.crt -out /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem -outform PEM\r\n\r\n# Combine all certificates into a single bundle file\r\nRUN cat /opt/certificates/DigiCertGlobalRootCA.crt.pem \\\r\n        /opt/certificates/DigiCertGlobalRootG2.crt.pem \\\r\n        /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem \\\r\n        > /opt/certificates/azure-mysql-ca-bundle.pem\r\n\r\n# Clean up individual certificate files (optional)\r\nRUN rm /opt/certificates/*.crt /opt/certificates/DigiCertGlobalRootCA.crt.pem \\\r\n       /opt/certificates/DigiCertGlobalRootG2.crt.pem \\\r\n       /opt/certificates/Microsoft-RSA-Root-CA-2017.crt.pem\r\n\r\nUSER 1001\r\nEXPOSE 8000\r\n\r\nENTRYPOINT [\"/opt/CTFd/docker-entrypoint.sh\"]\r\n",
+            "$fxv#1": "#!/bin/bash\r\nset -e\r\n\r\necho \"Waiting on RBAC replication\"\r\nsleep $initialDelay\r\n\r\necho \"$CONTENT\" > Dockerfile\r\n\r\naz acr build \\\r\n    --registry $acrName \\\r\n    --image $taggedImageName \\\r\n    --platform $platform \\\r\n    .\r\n",
             "containerRegistryName": "[format('ctfdacr{0}', uniqueString(resourceGroup().id))]",
             "ctfdImageName": "ctfd-azure-cert:latest"
           },
@@ -398,7 +398,7 @@
     {
       "condition": "[parameters('vnet')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "vnetDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -428,8 +428,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "14327329091686549038"
+              "version": "0.38.33.27573",
+              "templateHash": "11182114117381548661"
             }
           },
           "parameters": {
@@ -543,7 +543,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "ctfdFileStorage",
       "properties": {
         "expressionEvaluationOptions": {
@@ -558,7 +558,7 @@
             "value": "[parameters('resourcesLocation')]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2025-04-01').outputs.logAnalyticsWorkspaceId.value]"
           },
           "storageSkuName": {
             "value": "[variables('storageSkuName')]"
@@ -579,8 +579,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "15189742434822588328"
+              "version": "0.38.33.27573",
+              "templateHash": "17355121348518826363"
             }
           },
           "parameters": {
@@ -695,7 +695,7 @@
             {
               "condition": "[parameters('vnet')]",
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "storagePrivateEndpointDeploy",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -731,8 +731,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.30.23.60470",
-                      "templateHash": "8939390758381320725"
+                      "version": "0.38.33.27573",
+                      "templateHash": "12917425222645686647"
                     }
                   },
                   "parameters": {
@@ -865,7 +865,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "ctfdFileStorageAcl",
       "properties": {
         "expressionEvaluationOptions": {
@@ -886,7 +886,7 @@
             "value": "[parameters('vnet')]"
           },
           "webAppOutboundIpAdresses": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfDeploy'), '2022-09-01').outputs.outboundIpAdresses.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfDeploy'), '2025-04-01').outputs.outboundIpAdresses.value]"
           }
         },
         "template": {
@@ -895,8 +895,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "9147010146567357457"
+              "version": "0.38.33.27573",
+              "templateHash": "98342198534148912"
             }
           },
           "parameters": {
@@ -957,7 +957,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "ctfDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -990,13 +990,13 @@
             "value": "[parameters('webAppName')]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2025-04-01').outputs.logAnalyticsWorkspaceId.value]"
           },
           "acrImageName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'acrDeploy'), '2022-09-01').outputs.acrImage.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'acrDeploy'), '2025-04-01').outputs.acrImage.value]"
           },
           "registryName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'acrDeploy'), '2022-09-01').outputs.registryName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'acrDeploy'), '2025-04-01').outputs.registryName.value]"
           },
           "managedIdentityClientId": {
             "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id))), '2023-01-31').clientId]"
@@ -1005,7 +1005,7 @@
             "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('ctf-mi-{0}', uniqueString(resourceGroup().id)))]"
           },
           "storageAccountName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfdFileStorage'), '2022-09-01').outputs.storageAccountName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfdFileStorage'), '2025-04-01').outputs.storageAccountName.value]"
           },
           "vnet": {
             "value": "[parameters('vnet')]"
@@ -1017,8 +1017,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "3807116930661632967"
+              "version": "0.38.33.27573",
+              "templateHash": "8375832615045180862"
             }
           },
           "parameters": {
@@ -1310,7 +1310,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "keyVaultDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1331,7 +1331,7 @@
             "value": "[variables('virtualNetworkName')]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2025-04-01').outputs.logAnalyticsWorkspaceId.value]"
           },
           "vnet": {
             "value": "[parameters('vnet')]"
@@ -1340,7 +1340,7 @@
             "value": "[variables('keyVaultName')]"
           },
           "webAppOutboundIpAdresses": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfDeploy'), '2022-09-01').outputs.outboundIpAdresses.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'ctfDeploy'), '2025-04-01').outputs.outboundIpAdresses.value]"
           }
         },
         "template": {
@@ -1349,8 +1349,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "1933883236150725549"
+              "version": "0.38.33.27573",
+              "templateHash": "936459023733389496"
             }
           },
           "parameters": {
@@ -1484,7 +1484,7 @@
             {
               "condition": "[parameters('vnet')]",
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "keyVaultPrivateEndpointDeploy",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -1520,8 +1520,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.30.23.60470",
-                      "templateHash": "8939390758381320725"
+                      "version": "0.38.33.27573",
+                      "templateHash": "12917425222645686647"
                     }
                   },
                   "parameters": {
@@ -1659,7 +1659,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "redisDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -1683,7 +1683,7 @@
             "value": "[variables('ctfCacheSecretName')]"
           },
           "keyVaultName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy'), '2022-09-01').outputs.keyVaultName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy'), '2025-04-01').outputs.keyVaultName.value]"
           },
           "redisSkuName": {
             "value": "[parameters('redisSkuName')]"
@@ -1692,7 +1692,7 @@
             "value": "[parameters('redisSkuSize')]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2025-04-01').outputs.logAnalyticsWorkspaceId.value]"
           }
         },
         "template": {
@@ -1701,8 +1701,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "11875769902277335199"
+              "version": "0.38.33.27573",
+              "templateHash": "977923096016682397"
             }
           },
           "parameters": {
@@ -1815,7 +1815,7 @@
             {
               "condition": "[parameters('vnet')]",
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "redisPrivateEndpointDeploy",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -1851,8 +1851,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.30.23.60470",
-                      "templateHash": "8939390758381320725"
+                      "version": "0.38.33.27573",
+                      "templateHash": "12917425222645686647"
                     }
                   },
                   "parameters": {
@@ -1972,7 +1972,7 @@
             },
             {
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "redisKeyDeploy",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -1996,8 +1996,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.30.23.60470",
-                      "templateHash": "3629446120964483422"
+                      "version": "0.38.33.27573",
+                      "templateHash": "1520195056806986697"
                     }
                   },
                   "parameters": {
@@ -2049,7 +2049,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "mysqlDbDeploy",
       "properties": {
         "expressionEvaluationOptions": {
@@ -2063,8 +2063,8 @@
           "administratorLoginPassword": {
             "value": "[parameters('administratorLoginPassword')]"
           },
-          "vnetId": "[if(parameters('vnet'), createObject('value', reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2022-09-01').outputs.virtualNetworkId.value), createObject('value', ''))]",
-          "databaseSubnetId": "[if(parameters('vnet'), createObject('value', reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2022-09-01').outputs.databaseResourcesSubnetId.value), createObject('value', ''))]",
+          "vnetId": "[if(parameters('vnet'), createObject('value', reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2025-04-01').outputs.virtualNetworkId.value), createObject('value', ''))]",
+          "databaseSubnetId": "[if(parameters('vnet'), createObject('value', reference(resourceId('Microsoft.Resources/deployments', 'vnetDeploy'), '2025-04-01').outputs.databaseResourcesSubnetId.value), createObject('value', ''))]",
           "virtualNetworkName": {
             "value": "[variables('virtualNetworkName')]"
           },
@@ -2078,13 +2078,13 @@
             "value": "[variables('ctfDatabaseSecretName')]"
           },
           "keyVaultName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy'), '2022-09-01').outputs.keyVaultName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVaultDeploy'), '2025-04-01').outputs.keyVaultName.value]"
           },
           "mysqlWorkloadType": {
             "value": "[parameters('mysqlType')]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2022-09-01').outputs.logAnalyticsWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'logAnalyticsDeploy'), '2025-04-01').outputs.logAnalyticsWorkspaceId.value]"
           }
         },
         "template": {
@@ -2093,8 +2093,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.30.23.60470",
-              "templateHash": "2504651493707401756"
+              "version": "0.38.33.27573",
+              "templateHash": "1589984659799317438"
             }
           },
           "parameters": {
@@ -2298,7 +2298,7 @@
             },
             {
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "sqlDbKeyDeploy",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -2313,7 +2313,7 @@
                     "value": "[parameters('ctfDbSecretName')]"
                   },
                   "secretValue": {
-                    "value": "[format('mysql+pymysql://{0}:{1}@{2}.mysql.database.azure.com/ctfd?ssl_ca=/opt/certificates/DigiCertGlobalRootCA.crt.pem', parameters('administratorLogin'), parameters('administratorLoginPassword'), variables('mysqlServerName'))]"
+                    "value": "[format('mysql+pymysql://{0}:{1}@{2}.mysql.database.azure.com/ctfd?ssl_ca=/opt/certificates/azure-mysql-ca-bundle.pem', parameters('administratorLogin'), parameters('administratorLoginPassword'), variables('mysqlServerName'))]"
                   }
                 },
                 "template": {
@@ -2322,8 +2322,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.30.23.60470",
-                      "templateHash": "3629446120964483422"
+                      "version": "0.38.33.27573",
+                      "templateHash": "1520195056806986697"
                     }
                   },
                   "parameters": {
